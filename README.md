@@ -1,4 +1,4 @@
-# Assistente de dados "Tema 9" com text-to-SQL seguro
+# "Tema 9", Assistente de dados com text-to-SQL seguro
 
 Assistente que responde perguntas em português sobre despesas públicas federais. Ele gera SQL com um modelo aberto local, **valida a consulta antes de executar**, mostra tabela e gráfico e explica a consulta em linguagem simples.
 
