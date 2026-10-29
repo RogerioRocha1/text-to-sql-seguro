@@ -9,7 +9,7 @@ Regras da disciplina: pelo menos 10 interações relevantes até a entrega final
 ## 001 · Validador de SQL inicial
 
 - **Data:** 28/10/2026
-- **Integrante:** _(nome)_
+- **Integrante:** _(Rogério Rocha)_
 - **Ferramenta:** Claude
 - **Prompt (resumo):** pedido de um esqueleto de repositório para o Marco 1, com validador de SQL em SQLGlot, testes de ataques e CI no GitHub Actions.
 - **Resposta (resumo):** validador que aceita só um `SELECT`, bloqueia DDL, DML e comandos do DuckDB, restringe tabelas a uma lista, bloqueia funções de leitura de arquivo e injeta `LIMIT`; 37 casos de teste.
