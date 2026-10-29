@@ -1,0 +1,23 @@
+# Segredos
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Dados gerados pelo script de carga (regenerados com um comando)
+data/*.duckdb
+data/*.duckdb.wal
+data/raw/
+
+# Sistema e editores
+.DS_Store
+.vscode/
+.idea/
