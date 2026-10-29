@@ -70,7 +70,7 @@ data/                 banco DuckDB gerado pelo script de carga (fora do Git)
 | Integrante | Papel | Contribuição principal |
 | --- | --- | --- |
 | _(nome)_ | Dados e Qualidade | |
-| _(Rogério Rocha)_ | Backend e Infraestrutura | |
+| _(Rogério Rocha)_ | Backend e Infraestrutura | Marco 1|
 | _(nome)_ | IA e Avaliação | |
 | _(nome)_ | Produto e Interface | |
 
