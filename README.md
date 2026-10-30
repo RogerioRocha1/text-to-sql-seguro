@@ -158,7 +158,7 @@ data/raw/             ZIPs baixados do Portal da Transparência (fora do Git)
 ## Andamento
 
 - [x] Marco 1 · proposta técnica, repositório e CI rodando testes
-- [ ] Marco 2 · carga dos dados, fluxo ponta a ponta no Streamlit, Docker Compose
+- [x] Marco 2 · carga dos dados, fluxo ponta a ponta no Streamlit, Docker Compose
 - [ ] Marco 3 · MVP completo, 50 perguntas de referência, catálogo de ataques, baselines
 - [ ] Marco 4 · avaliação concluída, documentação técnica e evidências
 
@@ -166,7 +166,7 @@ data/raw/             ZIPs baixados do Portal da Transparência (fora do Git)
 
 | Integrante | Papel | Contribuição principal |
 | --- | --- | --- |
-| _(nome)_ | Dados e Qualidade | |
+| _(Rodrigo e Thallia)_ | Dados e Qualidade | Marco 2: Thallia baixou e analisou dados 2025, Rodrigo fez estrutura docker, git Windows e preparo do Marco2|
 | _(Rogério Rocha)_ | Backend e Infraestrutura | Marco 1: Proposta técnica, repositório, integração e revisão contínua|
 | _(nome)_ | IA e Avaliação | |
 | _(nome)_ | Produto e Interface | |
