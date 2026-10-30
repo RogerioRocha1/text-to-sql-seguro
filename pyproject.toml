@@ -5,6 +5,7 @@ description = "Assistente de dados com text-to-SQL seguro sobre despesas públic
 requires-python = ">=3.11"
 dependencies = [
     "sqlglot>=25",
+    "psycopg[binary]>=3.2",
 ]
 
 [project.optional-dependencies]

@@ -1,0 +1,11 @@
+.git
+.github
+.venv
+venv
+data
+docs
+eval
+evidencias
+tests
+**/__pycache__
+.env
