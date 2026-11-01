@@ -166,7 +166,7 @@ data/raw/             ZIPs baixados do Portal da Transparência (fora do Git)
 
 | Integrante | Papel | Contribuição principal |
 | --- | --- | --- |
-| _(Rodrigo e Thallia)_ | Dados e Qualidade | Marco 2: Thallia baixou e analisou dados 2025, Rodrigo fez estrutura docker, git Windows e preparo do Marco2|
+| _(Rodrigo e Thallia)_ | Dados e Qualidade | Marco 2: Thallia Silva de Oliveira: download e análise dos dados de 2025 do Portal da Transparência, conferência da carga no banco local, documentação da decisão sobre órgãos sem código (`docs/decisoes-de-dados.md`) e registro de uso de IA (`PROMPTS.md`). Rodrigo: estrutura docker, git Windows e preparo do Marco 2 |
 | _(Rogério Rocha)_ | Backend e Infraestrutura | Marco 1: Proposta técnica, repositório, integração e revisão contínua|
 | _(nome)_ | IA e Avaliação | |
 | _(nome)_ | Produto e Interface | |
