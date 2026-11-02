@@ -24,12 +24,14 @@ flowchart LR
 - **Dados:** CSV de Orçamento da Despesa (anual) e Execução da Despesa (12 arquivos mensais) do Portal da Transparência, ano 2025, carregados no PostgreSQL pelo serviço `carga`. Sem dados de pessoas físicas: o nome do autor de emenda parlamentar é descartado e vira só a coluna `com_emenda`.
 - **Esquema consultável:** `orgao`, `funcao`, `subfuncao`, `programa_acao`, `orcamento` e `execucao_mensal`, com comentários em tabelas e colunas que alimentam o prompt do modelo. Definido em [`esquema.py`](src/assistente_sql/esquema.py).
 - **Modelo:** modelo aberto de código rodando no Ollama. Custo zero, sem chaves de API.
-- **Validador:** aceita um único `SELECT`; bloqueia escrita, comandos administrativos, leitura de arquivos e tabelas fora da lista; aplica `LIMIT`.
+- **Validador:** aceita um único `SELECT` no dialeto do PostgreSQL; bloqueia escrita (inclusive escondida em `WITH`, `SELECT INTO` e `FOR UPDATE`), comandos administrativos, funções perigosas (`pg_sleep`, `pg_read_file`, `set_config`, `query_to_xml`, `dblink`...), schemas fora de `public` e tabelas fora da lista; aplica `LIMIT`; e recusa consultas com custo estimado pelo `EXPLAIN` acima de 1.000.000 ([calibração](eval/README.md)).
 - **Defesa em camadas:** mesmo que o validador falhe, a aplicação consulta com o usuário `leitor`, que só tem `SELECT` no schema `public`, transações somente leitura e limite de 15 s por consulta ([`01-leitor.sh`](docker/postgres/01-leitor.sh)).
 
 ## Como rodar
 
 ### Testes (disponível desde o Marco 1)
+
+Os testes de custo que usam o banco real são pulados, a menos que `DATABASE_URL_LEITOR` esteja definida (por exemplo, `postgresql://leitor:<senha>@127.0.0.1:5432/despesas`, com o banco do Marco 2 no ar).
 
 ```bash
 python -m venv .venv

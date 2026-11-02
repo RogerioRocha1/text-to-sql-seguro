@@ -113,6 +113,26 @@ Regras da disciplina: pelo menos 10 interações relevantes até a entrega final
 
 ---
 
+## 008 · Validador adaptado para PostgreSQL, com limite de custo (preparação do Marco 3)
+
+- **Data:** 02/11/2026
+- **Integrante:** Rodrigo Santos
+- **Ferramenta:** Claude Code (extensão do VS Code)
+- **Prompt (resumo):** "Analise os últimos commits da branch main. Vamos começar a preparação para o Marco 3." Depois: "Podemos começar pelo passo 1 [validador para PostgreSQL]. Faça no padrão de gerar uma branch nova."
+- **Resposta (resumo):** a IA analisou os commits e apontou que o Marco 2 estava marcado como concluído no README sem que existissem ainda Ollama, Streamlit ou o fluxo ponta a ponta. Depois, propôs um plano para o Marco 3. Na branch `validador-postgres`:
+  - Testou primeiro como o SQLGlot interpreta ataques do PostgreSQL e encontrou três brechas da versão DuckDB: `SELECT * INTO <tabela permitida>` (cria tabela), `FOR UPDATE` e funções perigosas que não estavam na lista.
+  - Trocou o dialeto para `postgres` e o schema para `public`, adicionou as funções perigosas e criou `verificar_custo`, que usa `EXPLAIN` sem executar a consulta.
+  - Calibrou o limite de custo medindo 10 consultas no banco real (tabela em `eval/README.md`): legítimas até cerca de 47 mil, abusivas a partir de 31 milhões. O limite ficou em 1.000.000.
+  - Os testes passaram de 46 para 88: o catálogo tem 54 casos bloqueados, há 4 testes de custo com cursor falso, para a CI, e 4 contra o banco real. A cobertura do validador é de 100%.
+- **Decisão:** _(aceito / corrigido / descartado)_
+- **Motivo e revisão:** _(o revisor do PR deve conferir:)_
+  - A lista de funções proibidas é uma lista de bloqueio, incompleta por natureza; a proteção final continua sendo o usuário `leitor`.
+  - `version()` e `current_user` foram bloqueadas por precaução, embora o risco seja baixo.
+  - O limite de 1.000.000 foi calibrado com poucas consultas; deve ser revisto com as 50 perguntas de referência.
+  - **Erro da IA (corrigido):** na primeira versão, a mensagem para `outro_banco.public.orgao` dizia "schema 'public' não pode ser consultado". Ela foi trocada por uma mensagem que fala do banco externo.
+
+---
+
 ## Modelo para novos registros
 
 ```markdown
