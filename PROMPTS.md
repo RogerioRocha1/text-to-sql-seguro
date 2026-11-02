@@ -101,6 +101,18 @@ Regras da disciplina: pelo menos 10 interações relevantes até a entrega final
 
 ---
 
+## 007 · Levantamento das pendências do Marco 2
+
+- **Data:** 31/10/2026
+- **Integrante:** Thallia Silva de Oliveira
+- **Ferramenta:** Claude (chat)
+- **Prompt (resumo):** "Identifique o que ainda falta para finalizar o Marco 2 na minha branch `dados-qualidade`, dentro do meu papel de Dados e Qualidade."
+- **Resposta (resumo):** o Claude apontou as pendências do meu papel: decisões em branco no `PROMPTS.md`, documentar a normalização dos órgãos sem código, completar a tabela de contribuição do README e testar os comandos de Ubuntu do guia do Docker.
+- **Decisão:** aceito
+- **Motivo e revisão:** conferi cada pendência nos arquivos do repositório antes de começar a corrigir.
+
+---
+
 ## Modelo para novos registros
 
 ```markdown
