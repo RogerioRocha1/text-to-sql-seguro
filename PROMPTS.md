@@ -133,6 +133,27 @@ Regras da disciplina: pelo menos 10 interações relevantes até a entrega final
 
 ---
 
+## 009 · Gerador com Ollama e fluxo ponta a ponta (Marco 2)
+
+- **Data:** 02/11/2026
+- **Integrante:** Rodrigo Santos
+- **Ferramenta:** Claude Code (extensão do VS Code)
+- **Prompt (resumo):** "Qual o próximo passo para finalizarmos o Marco 2?" e, depois do plano (gerador → executor → Streamlit → Docker), "pode seguir".
+- **Resposta (resumo):** na branch `prototipo-ponta-a-ponta`, criada a partir de `validador-postgres`:
+  - **Ollama no compose:** serviços `ollama` e `ollama-modelo`; GPU opcional em `docker-compose.gpu.yml`, para não quebrar `docker compose up` em máquinas sem NVIDIA.
+  - **`gerador.py`:** lê do banco o esquema (comentários, chaves estrangeiras e valores comuns via `pg_stats`), monta o prompt como `CREATE TABLE` comentado e chama a API do Ollama.
+  - **`assistente.py`:** encadeia gerar → validar → custo → executar como `leitor`, em transação somente leitura sempre desfeita; inclui uma linha de comando.
+  - **Carga:** passou a criar a extensão `unaccent`, porque 262 nomes têm acento e 2.807 não, e a rodar `ANALYZE`.
+  - **Testes:** 21 novos (107 no total); o modelo é falso na CI.
+- **Decisão:** _(aceito / corrigido / descartado)_
+- **Motivo e revisão:**
+  - **Bloqueio de ambiente:** a imagem do Ollama (8,5 GB) deixou só 5,1 GB livres no disco; o integrante liberou espaço antes de baixar o modelo de 7B.
+  - **Erros do modelo encontrados no teste manual:** "Ministério da Saúde" e "Ministério da Educação" retornaram `NULL`, porque o modelo filtrou `orgao.nome` em vez de `nome_orgao_superior`. Uma regra no prompt corrigiu, e os valores passaram a bater com o SQL de referência.
+  - **Erro que ficou em aberto:** "Fiocruz" foi respondida com o total do Ministério da Saúde. Foi registrada em `evidencias/casos-de-falha.md` em vez de ajustar o prompt pergunta a pergunta, para não decorar perguntas que poderiam cair na avaliação.
+  - **Ataques em português:** o modelo gerou `DROP TABLE` quando pedido, e o validador bloqueou.
+
+---
+
 ## Modelo para novos registros
 
 ```markdown

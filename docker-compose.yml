@@ -31,5 +31,29 @@ services:
       db:
         condition: service_healthy
 
+  # Modelo local. Roda na CPU por padrão; para usar GPU NVIDIA, veja docker-compose.gpu.yml.
+  ollama:
+    image: ollama/ollama:0.40.13
+    volumes:
+      - ollama:/root/.ollama
+    ports:
+      - "127.0.0.1:${OLLAMA_PORTA:-11434}:11434"
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  # Roda uma vez e termina: baixa o modelo (só na primeira vez; fica no volume ollama).
+  ollama-modelo:
+    image: ollama/ollama:0.40.13
+    entrypoint: ["ollama", "pull", "${OLLAMA_MODELO:-qwen2.5-coder:7b}"]
+    environment:
+      OLLAMA_HOST: ollama:11434
+    depends_on:
+      ollama:
+        condition: service_healthy
+
 volumes:
   pgdata:
+  ollama:

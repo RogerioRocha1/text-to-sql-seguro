@@ -1,13 +1,12 @@
 """Testes do validador. Cada ataque do catálogo deve virar um caso aqui."""
 
-import os
-
 import psycopg
 import pytest
 
 from assistente_sql import validar, verificar_custo
 from assistente_sql.esquema import TABELAS_CONSULTAVEIS
 from assistente_sql.validador import ResultadoValidacao
+from conftest import banco
 
 TABELAS = frozenset(TABELAS_CONSULTAVEIS)
 
@@ -192,15 +191,6 @@ def test_custo_recusa_consulta_nao_aprovada():
 
 
 # --- Custo no banco real (roda só com DATABASE_URL_LEITOR definida) --------
-
-URL_LEITOR = os.environ.get("DATABASE_URL_LEITOR")
-banco = pytest.mark.skipif(not URL_LEITOR, reason="defina DATABASE_URL_LEITOR para rodar")
-
-
-@pytest.fixture
-def cursor_leitor():
-    with psycopg.connect(URL_LEITOR, autocommit=True) as conexao:
-        yield conexao.cursor()
 
 
 @banco

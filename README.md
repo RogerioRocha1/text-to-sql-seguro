@@ -136,6 +136,24 @@ O banco escuta só em `127.0.0.1:5432`. Para acessar de um cliente gráfico (DBe
 | `Permission denied: '/dados/...'` na carga (Linux) | `data/raw` foi criado pelo Docker como root. Rode `sudo chown -R 1000:1000 data/raw`. |
 | Trocou a senha no `.env` e o banco recusa | As senhas só são lidas na criação do volume. Para recriar do zero: `docker compose down -v` e suba de novo (apaga o banco; os ZIPs em `data/raw` ficam). |
 
+### Modelo local (Ollama) e perguntas pela linha de comando
+
+```bash
+docker compose up -d --wait ollama   # servidor do modelo, só em 127.0.0.1:11434
+docker compose run --rm ollama-modelo  # baixa o OLLAMA_MODELO (~4,7 GB, só na primeira vez)
+```
+
+Por padrão o modelo roda na CPU. Com GPU NVIDIA, descomente no `.env` a linha `COMPOSE_FILE` do seu sistema ([docker-compose.gpu.yml](docker-compose.gpu.yml)) antes de subir o Ollama. Com pouca memória ou disco, use `OLLAMA_MODELO=qwen2.5-coder:3b`.
+
+Com o banco e o Ollama no ar, dá para perguntar pela linha de comando (fora do Docker, com o ambiente dos testes):
+
+```bash
+export DATABASE_URL_LEITOR=postgresql://leitor:<senha>@127.0.0.1:5432/despesas   # PowerShell: $env:DATABASE_URL_LEITOR="..."
+python -m assistente_sql.assistente "Quanto o Ministério da Saúde pagou em 2025?"
+```
+
+A saída mostra o SQL gerado, a situação (`ok`, `bloqueada`, `erro_execucao` ou `erro_modelo`), o motivo do bloqueio e o tempo de cada etapa. Na RTX 3050 de 6 GB, a primeira pergunta leva cerca de 50 s (o modelo é carregado na GPU) e as seguintes, cerca de 5 a 7 s.
+
 ### Aplicação completa (a partir do Marco 2)
 
 ```bash
@@ -148,7 +166,7 @@ Variáveis de ambiente: veja `.env.example`. Nenhuma chave de API é necessária
 ## Estrutura
 
 ```text
-src/assistente_sql/   código da aplicação (validador já implementado)
+src/assistente_sql/   código da aplicação: carga, validador, gerador (Ollama) e fluxo ponta a ponta
 tests/                testes automatizados
 eval/                 perguntas de referência, catálogo de ataques e scripts de avaliação
 evidencias/           vídeo, logs, prints e índice das evidências
