@@ -18,10 +18,11 @@ services:
       timeout: 5s
       retries: 20
 
-  # Roda uma vez e termina: baixa os CSV (guardados em data/raw) e recarrega o banco.
+  # Roda e termina: baixa os CSV (guardados em data/raw) e carrega o banco, só se
+  # ele estiver vazio. Para recarregar: docker compose run --rm carga python -m assistente_sql.carga
   carga:
     build: .
-    command: ["python", "-m", "assistente_sql.carga", "--ano", "${ANO_DADOS:-2025}"]
+    command: ["python", "-m", "assistente_sql.carga", "--ano", "${ANO_DADOS:-2025}", "--se-vazio"]
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-carga}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-despesas}
       DADOS_DIR: /dados
@@ -44,15 +45,40 @@ services:
       timeout: 5s
       retries: 20
 
-  # Roda uma vez e termina: baixa o modelo (só na primeira vez; fica no volume ollama).
+  # Roda e termina: baixa o modelo só se ele ainda não está no volume (funciona offline depois).
   ollama-modelo:
     image: ollama/ollama:0.40.13
-    entrypoint: ["ollama", "pull", "${OLLAMA_MODELO:-qwen2.5-coder:7b}"]
+    entrypoint: ["sh", "-c", 'ollama show "$$OLLAMA_MODELO" > /dev/null 2>&1 || ollama pull "$$OLLAMA_MODELO"']
     environment:
       OLLAMA_HOST: ollama:11434
+      OLLAMA_MODELO: ${OLLAMA_MODELO:-qwen2.5-coder:7b}
     depends_on:
       ollama:
         condition: service_healthy
+
+  # Interface web em http://localhost:8501. Consulta o banco só como usuário leitor.
+  app:
+    build: .
+    command:
+      - streamlit
+      - run
+      - src/assistente_sql/app.py
+      - --server.address=0.0.0.0
+      - --server.headless=true
+      - --browser.gatherUsageStats=false
+    environment:
+      DATABASE_URL_LEITOR: postgresql://${POSTGRES_LEITOR_USUARIO:-leitor}:${POSTGRES_LEITOR_SENHA}@db:5432/${POSTGRES_DB:-despesas}
+      OLLAMA_URL: http://ollama:11434
+      OLLAMA_MODELO: ${OLLAMA_MODELO:-qwen2.5-coder:7b}
+      LIMITE_LINHAS: ${LIMITE_LINHAS:-1000}
+      CUSTO_MAXIMO: ${CUSTO_MAXIMO:-1000000}
+    ports:
+      - "127.0.0.1:${APP_PORTA:-8501}:8501"
+    depends_on:
+      carga:
+        condition: service_completed_successfully
+      ollama-modelo:
+        condition: service_completed_successfully
 
 volumes:
   pgdata:

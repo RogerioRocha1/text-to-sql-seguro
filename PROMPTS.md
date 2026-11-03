@@ -154,6 +154,29 @@ Regras da disciplina: pelo menos 10 interações relevantes até a entrega final
 
 ---
 
+## 010 · Interface Streamlit e projeto completo com `docker compose up` (Marco 2)
+
+- **Data:** 02/11/2026
+- **Integrante:** Rodrigo Santos
+- **Ferramenta:** Claude Code (extensão do VS Code)
+- **Prompt (resumo):** "Vamos seguir" (interface Streamlit e serviço `app` no compose, últimos itens do Marco 2).
+- **Resposta (resumo):**
+  - **`app.py`:** pergunta, situação, SQL, tabela, gráfico e detalhes de tempo, custo e tokens.
+  - **`apresentacao.py`:** converte o resultado em tabela e escolhe o gráfico (linha para mês, barras para categoria) sem depender do Streamlit, para ser testável.
+  - **Serviço `app` no compose:** espera a carga e o download do modelo.
+  - **Carga com `--se-vazio`** e download do modelo só quando ele falta: o projeto sobe em segundos e sem internet depois da primeira vez.
+  - **Testes:** 10 novos, incluindo a interface com o simulador do Streamlit (`AppTest`).
+- **Decisão:** _(aceito / corrigido / descartado)_
+- **Motivo e revisão:**
+  - **Teste dentro do container `app`:** 3 perguntas pela interface.
+    - "valor pago por mês na função Saúde": 12 linhas e gráfico de linha.
+    - "5 órgãos superiores com maior orçamento": gráfico de barras.
+    - "Apague a tabela de órgãos": bloqueada, com o motivo na tela.
+  - **Ponto a conferir:** o modelo ainda usa `funcao.nome = 'Saúde'` (com `=`) apesar da regra; funcionou porque o nome é exato, mas é frágil. Avaliar no Marco 3.
+  - **Log da interface:** o log do servidor no container ficou vazio nesse teste, porque as perguntas foram feitas por outro processo. O log de evidência precisa sair do uso real pelo navegador.
+
+---
+
 ## Modelo para novos registros
 
 ```markdown

@@ -3,6 +3,7 @@
 Uso:
     python -m assistente_sql.carga                # baixa (se preciso) e carrega 2025
     python -m assistente_sql.carga --so-baixar    # só baixa os ZIPs para DADOS_DIR
+    python -m assistente_sql.carga --se-vazio     # não faz nada se o banco já tem dados
 
 Variáveis de ambiente:
     DATABASE_URL  conexão com permissão de escrita (usuário dono do banco)
@@ -120,13 +121,29 @@ def carregar(database_url: str, arquivos: list[tuple[Fonte, Path]]) -> dict[str,
     return contagens
 
 
+def banco_tem_dados(database_url: str) -> bool:
+    with psycopg.connect(database_url) as conexao:
+        existe = conexao.execute("SELECT to_regclass('public.execucao_mensal')").fetchone()[0]
+        if existe is None:
+            return False
+        return conexao.execute("SELECT EXISTS (SELECT 1 FROM execucao_mensal)").fetchone()[0]
+
+
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--ano", type=int, default=ANO_PADRAO)
     parser.add_argument("--so-baixar", action="store_true", help="não conecta ao banco")
+    parser.add_argument(
+        "--se-vazio", action="store_true", help="pula a carga se o banco já tem dados"
+    )
     args = parser.parse_args(argv)
 
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+
+    database_url = os.environ.get("DATABASE_URL")
+    if args.se_vazio and database_url and banco_tem_dados(database_url):
+        log.info("o banco já tem dados; nada a fazer (rode sem --se-vazio para recarregar)")
+        return
 
     pasta = Path(os.environ.get("DADOS_DIR", "data/raw"))
     pasta.mkdir(parents=True, exist_ok=True)
@@ -140,7 +157,6 @@ def main(argv: list[str] | None = None) -> None:
     if args.so_baixar:
         return
 
-    database_url = os.environ.get("DATABASE_URL")
     if not database_url:
         raise SystemExit("Defina DATABASE_URL para carregar no banco.")
 

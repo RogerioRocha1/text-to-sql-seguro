@@ -157,16 +157,20 @@ A saída mostra o SQL gerado, a situação (`ok`, `bloqueada`, `erro_execucao` o
 ### Aplicação completa (a partir do Marco 2)
 
 ```bash
-cp .env.example .env
+cp .env.example .env      # troque as duas senhas
 docker compose up
 ```
+
+Abra http://localhost:8501. O `docker compose up` sobe o banco e o Ollama, carrega os dados e baixa o modelo (só se ainda não existirem) e então inicia a interface. Na primeira vez, isso baixa cerca de 90 MB de dados, 8,5 GB da imagem do Ollama e 4,7 GB do modelo; nas seguintes, sobe em segundos e funciona sem internet.
+
+A interface mostra, para cada pergunta: o SQL gerado, se a consulta foi executada ou bloqueada (e por quê), a tabela de resultado, um gráfico quando o resultado tem uma categoria e um valor, e os tempos de cada etapa.
 
 Variáveis de ambiente: veja `.env.example`. Nenhuma chave de API é necessária.
 
 ## Estrutura
 
 ```text
-src/assistente_sql/   código da aplicação: carga, validador, gerador (Ollama) e fluxo ponta a ponta
+src/assistente_sql/   código da aplicação: carga, validador, gerador (Ollama), fluxo ponta a ponta e interface (app.py)
 tests/                testes automatizados
 eval/                 perguntas de referência, catálogo de ataques e scripts de avaliação
 evidencias/           vídeo, logs, prints e índice das evidências
