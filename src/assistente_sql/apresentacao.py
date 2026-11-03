@@ -27,12 +27,29 @@ class Grafico:
 
 
 def para_tabela(resposta: Resposta) -> pd.DataFrame:
-    """Monta o DataFrame; valores Decimal viram float para tabela e gráfico."""
-    tabela = pd.DataFrame(resposta.linhas, columns=resposta.colunas)
+    """Monta o DataFrame; valores Decimal viram float para tabela e gráfico.
+
+    Colunas com o mesmo nome (``SELECT o.nome, f.nome``) ganham sufixo
+    (``nome``, ``nome_2``), porque pandas e Streamlit exigem nomes únicos.
+    """
+    tabela = pd.DataFrame(resposta.linhas, columns=_nomes_unicos(resposta.colunas))
     for coluna in tabela.columns:
         if tabela[coluna].map(lambda v: isinstance(v, Decimal)).any():
             tabela[coluna] = pd.to_numeric(tabela[coluna], errors="coerce")
     return tabela
+
+
+def _nomes_unicos(colunas: list[str]) -> list[str]:
+    usados: set[str] = set()
+    unicos = []
+    for nome in colunas:
+        candidato, n = nome, 1
+        while candidato in usados:
+            n += 1
+            candidato = f"{nome}_{n}"
+        usados.add(candidato)
+        unicos.append(candidato)
+    return unicos
 
 
 def escolher_grafico(tabela: pd.DataFrame) -> Grafico | None:
