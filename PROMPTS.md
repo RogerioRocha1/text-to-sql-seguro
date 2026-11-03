@@ -199,6 +199,21 @@ Regras da disciplina: pelo menos 10 interações relevantes até a entrega final
 
 ---
 
+## 012 · Dúvidas sobre o funcionamento e PR único do Marco 2
+
+- **Data:** 02/11/2026
+- **Integrante:** Rodrigo Santos
+- **Ferramenta:** Claude Code (extensão do VS Code)
+- **Prompt (resumo):** "Quais exemplos de pergunta temos?", "As perguntas são hardcoded ou há alguma inteligência para interpretar e converter no SQL?" e "Vamos fazer [o PR]. Quero subir apenas 1 PR contendo tudo que fizemos. Os prompts foram salvos no arquivo?"
+- **Resposta (resumo):**
+  - **Exemplos:** a IA listou os 3 exemplos da interface e as perguntas já testadas, separando o que foi verificado das ideias não testadas. Também avisou que as perguntas usadas nos testes não podem entrar no conjunto de teste do Marco 3.
+  - **Funcionamento:** explicou que nada é fixo além das 3 sugestões de texto e das regras gerais do prompt. O SQL é escrito pelo modelo a cada pergunta, a partir do esquema lido do banco. Citou como prova os erros do modelo (Fiocruz) e o `DROP TABLE` gerado por ele.
+  - **PR:** conferiu que os registros 003 a 011 estavam no arquivo, criou este registro e enviou a branch `prototipo-ponta-a-ponta`, que já contém o commit do validador, para um PR único na `main`.
+- **Decisão:** _(aceito / corrigido / descartado)_
+- **Motivo e revisão:** _(o revisor do PR confere o conjunto; as decisões dos registros 003, 005, 006 e 008 a 012 ainda precisam ser preenchidas pelo grupo)_
+
+---
+
 ## Modelo para novos registros
 
 ```markdown
