@@ -10,16 +10,7 @@ Os dados de despesas federais são abertos, mas consultá-los exige saber SQL ou
 
 ## Arquitetura
 
-```mermaid
-flowchart LR
-    P[Pergunta do usuário] --> M[Montagem do prompt<br/>esquema + exemplos]
-    M --> L[Modelo local<br/>Ollama]
-    L -->|SQL gerado| V{Validador<br/>SQLGlot}
-    L -.->|pergunta ambígua| P
-    V -->|aprovado| E[Executor PostgreSQL<br/>usuário somente leitura]
-    V -->|reprovado| B[Consulta bloqueada<br/>motivo explicado]
-    E --> R[Tabela, gráfico<br/>e explicação]
-```
+![Arquitetura: pergunta, prompt com esquema, modelo local, validador, executor somente leitura e resposta](docs/arquitetura.svg)
 
 - **Dados:** CSV de Orçamento da Despesa (anual) e Execução da Despesa (12 arquivos mensais) do Portal da Transparência, ano 2025, carregados no PostgreSQL pelo serviço `carga`. Sem dados de pessoas físicas: o nome do autor de emenda parlamentar é descartado e vira só a coluna `com_emenda`.
 - **Esquema consultável:** `orgao`, `funcao`, `subfuncao`, `programa_acao`, `orcamento` e `execucao_mensal`, com comentários em tabelas e colunas que alimentam o prompt do modelo. Definido em [`esquema.py`](src/assistente_sql/esquema.py).
