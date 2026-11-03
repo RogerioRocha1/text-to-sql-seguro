@@ -132,6 +132,41 @@ def _funcao_proibida(nome: str) -> bool:
     return nome in _FUNCOES_PROIBIDAS or nome.startswith(_PREFIXOS_PROIBIDOS)
 
 
+def _nomes_cte(com: exp.With) -> list[str]:
+    return [cte.alias_or_name.lower() for cte in com.expressions]
+
+
+def _ctes_visiveis(tabela: exp.Table) -> set[str]:
+    """Nomes de WITH que o PostgreSQL enxerga no ponto onde ``tabela`` aparece.
+
+    Segue as regras do banco: um WITH vale para a consulta em que foi definido
+    (e as subconsultas dela), não para a consulta de fora; e, sem RECURSIVE,
+    uma CTE só enxerga as CTEs definidas antes dela. Sem isso, um nome como
+    ``pg_settings`` definido em WITH liberaria a tabela do catálogo com o mesmo
+    nome em outro ponto da consulta.
+    """
+    visiveis: set[str] = set()
+    filho: exp.Expression = tabela
+    no = tabela.parent
+    while no is not None:
+        if isinstance(no, exp.With):
+            nomes = _nomes_cte(no)
+            if no.args.get("recursive"):
+                visiveis.update(nomes)
+            else:
+                for i, cte in enumerate(no.expressions):
+                    if cte is filho:
+                        visiveis.update(nomes[:i])
+                        break
+        else:
+            # A chave é "with_" nas versões novas do SQLGlot e "with" nas antigas.
+            com = no.args.get("with_") or no.args.get("with")
+            if isinstance(com, exp.With) and com is not filho:
+                visiveis.update(_nomes_cte(com))
+        filho, no = no, no.parent
+    return visiveis
+
+
 def validar(
     sql: str,
     tabelas_permitidas: set[str] | frozenset[str] | tuple[str, ...],
@@ -161,8 +196,7 @@ def validar(
         if isinstance(no, _NOS_PROIBIDOS):
             return _reprovar("A consulta contém um comando que altera ou administra o banco.")
 
-    nomes_cte = {cte.alias_or_name.lower() for cte in raiz.find_all(exp.CTE)}
-    permitidas = {t.lower() for t in tabelas_permitidas} | nomes_cte
+    permitidas = {t.lower() for t in tabelas_permitidas}
 
     for tabela in raiz.find_all(exp.Table):
         if not isinstance(tabela.this, exp.Identifier):
@@ -171,7 +205,10 @@ def validar(
             return _reprovar(f"O banco '{tabela.catalog}' não pode ser consultado.")
         if tabela.db.lower() not in _SCHEMAS_PERMITIDOS:
             return _reprovar(f"O schema '{tabela.db}' não pode ser consultado.")
-        if tabela.name.lower() not in permitidas:
+        nome = tabela.name.lower()
+        # Nome com schema (public.x) nunca é CTE; sem schema, só se o WITH estiver visível.
+        e_cte = not tabela.db and nome in _ctes_visiveis(tabela)
+        if not e_cte and nome not in permitidas:
             return _reprovar(f"A tabela '{tabela.name}' não existe ou não pode ser consultada.")
 
     for funcao in raiz.find_all(exp.Func):
