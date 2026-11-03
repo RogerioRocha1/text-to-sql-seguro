@@ -43,6 +43,10 @@ LANGUAGE sql IMMUTABLE AS $$ SELECT nullif(trim(v), '') $$;
 CRIAR_ESQUEMA = """
 DROP TABLE IF EXISTS execucao_mensal, orcamento, programa_acao, subfuncao, funcao, orgao;
 
+-- Os nomes vêm com e sem acento ("Saúde", "SAUDE"); unaccent permite buscar
+-- pelas duas grafias.
+CREATE EXTENSION IF NOT EXISTS unaccent;
+
 CREATE TABLE orgao (
     codigo text PRIMARY KEY,
     nome text NOT NULL,
@@ -239,6 +243,10 @@ CREATE INDEX ON execucao_mensal (codigo_orgao);
 CREATE INDEX ON execucao_mensal (codigo_funcao);
 CREATE INDEX ON execucao_mensal (ano, mes);
 CREATE INDEX ON execucao_mensal (uf);
+
+-- Estatísticas para o planejador (custo do EXPLAIN) e para os valores de
+-- exemplo que o gerador mostra ao modelo.
+ANALYZE orgao, funcao, subfuncao, programa_acao, orcamento, execucao_mensal;
 """
 
 LIMPAR_STAGING = """

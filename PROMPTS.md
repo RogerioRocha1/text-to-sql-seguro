@@ -113,6 +113,107 @@ Regras da disciplina: pelo menos 10 interações relevantes até a entrega final
 
 ---
 
+## 008 · Validador adaptado para PostgreSQL, com limite de custo (preparação do Marco 3)
+
+- **Data:** 02/11/2026
+- **Integrante:** Rodrigo Santos
+- **Ferramenta:** Claude Code (extensão do VS Code)
+- **Prompt (resumo):** "Analise os últimos commits da branch main. Vamos começar a preparação para o Marco 3." Depois: "Podemos começar pelo passo 1 [validador para PostgreSQL]. Faça no padrão de gerar uma branch nova."
+- **Resposta (resumo):** a IA analisou os commits e apontou que o Marco 2 estava marcado como concluído no README sem que existissem ainda Ollama, Streamlit ou o fluxo ponta a ponta. Depois, propôs um plano para o Marco 3. Na branch `validador-postgres`:
+  - Testou primeiro como o SQLGlot interpreta ataques do PostgreSQL e encontrou três brechas da versão DuckDB: `SELECT * INTO <tabela permitida>` (cria tabela), `FOR UPDATE` e funções perigosas que não estavam na lista.
+  - Trocou o dialeto para `postgres` e o schema para `public`, adicionou as funções perigosas e criou `verificar_custo`, que usa `EXPLAIN` sem executar a consulta.
+  - Calibrou o limite de custo medindo 10 consultas no banco real (tabela em `eval/README.md`): legítimas até cerca de 47 mil, abusivas a partir de 31 milhões. O limite ficou em 1.000.000.
+  - Os testes passaram de 46 para 88: o catálogo tem 54 casos bloqueados, há 4 testes de custo com cursor falso, para a CI, e 4 contra o banco real. A cobertura do validador é de 100%.
+- **Decisão:** _(aceito / corrigido / descartado)_
+- **Motivo e revisão:** _(o revisor do PR deve conferir:)_
+  - A lista de funções proibidas é uma lista de bloqueio, incompleta por natureza; a proteção final continua sendo o usuário `leitor`.
+  - `version()` e `current_user` foram bloqueadas por precaução, embora o risco seja baixo.
+  - O limite de 1.000.000 foi calibrado com poucas consultas; deve ser revisto com as 50 perguntas de referência.
+  - **Erro da IA (corrigido):** na primeira versão, a mensagem para `outro_banco.public.orgao` dizia "schema 'public' não pode ser consultado". Ela foi trocada por uma mensagem que fala do banco externo.
+
+---
+
+## 009 · Gerador com Ollama e fluxo ponta a ponta (Marco 2)
+
+- **Data:** 02/11/2026
+- **Integrante:** Rodrigo Santos
+- **Ferramenta:** Claude Code (extensão do VS Code)
+- **Prompt (resumo):** "Qual o próximo passo para finalizarmos o Marco 2?" e, depois do plano (gerador → executor → Streamlit → Docker), "pode seguir".
+- **Resposta (resumo):** na branch `prototipo-ponta-a-ponta`, criada a partir de `validador-postgres`:
+  - **Ollama no compose:** serviços `ollama` e `ollama-modelo`; GPU opcional em `docker-compose.gpu.yml`, para não quebrar `docker compose up` em máquinas sem NVIDIA.
+  - **`gerador.py`:** lê do banco o esquema (comentários, chaves estrangeiras e valores comuns via `pg_stats`), monta o prompt como `CREATE TABLE` comentado e chama a API do Ollama.
+  - **`assistente.py`:** encadeia gerar → validar → custo → executar como `leitor`, em transação somente leitura sempre desfeita; inclui uma linha de comando.
+  - **Carga:** passou a criar a extensão `unaccent`, porque 262 nomes têm acento e 2.807 não, e a rodar `ANALYZE`.
+  - **Testes:** 21 novos (107 no total); o modelo é falso na CI.
+- **Decisão:** _(aceito / corrigido / descartado)_
+- **Motivo e revisão:**
+  - **Bloqueio de ambiente:** a imagem do Ollama (8,5 GB) deixou só 5,1 GB livres no disco; o integrante liberou espaço antes de baixar o modelo de 7B.
+  - **Erros do modelo encontrados no teste manual:** "Ministério da Saúde" e "Ministério da Educação" retornaram `NULL`, porque o modelo filtrou `orgao.nome` em vez de `nome_orgao_superior`. Uma regra no prompt corrigiu, e os valores passaram a bater com o SQL de referência.
+  - **Erro que ficou em aberto:** "Fiocruz" foi respondida com o total do Ministério da Saúde. Foi registrada em `evidencias/casos-de-falha.md` em vez de ajustar o prompt pergunta a pergunta, para não decorar perguntas que poderiam cair na avaliação.
+  - **Ataques em português:** o modelo gerou `DROP TABLE` quando pedido, e o validador bloqueou.
+
+---
+
+## 010 · Interface Streamlit e projeto completo com `docker compose up` (Marco 2)
+
+- **Data:** 02/11/2026
+- **Integrante:** Rodrigo Santos
+- **Ferramenta:** Claude Code (extensão do VS Code)
+- **Prompt (resumo):** "Vamos seguir" (interface Streamlit e serviço `app` no compose, últimos itens do Marco 2).
+- **Resposta (resumo):**
+  - **`app.py`:** pergunta, situação, SQL, tabela, gráfico e detalhes de tempo, custo e tokens.
+  - **`apresentacao.py`:** converte o resultado em tabela e escolhe o gráfico (linha para mês, barras para categoria) sem depender do Streamlit, para ser testável.
+  - **Serviço `app` no compose:** espera a carga e o download do modelo.
+  - **Carga com `--se-vazio`** e download do modelo só quando ele falta: o projeto sobe em segundos e sem internet depois da primeira vez.
+  - **Testes:** 10 novos, incluindo a interface com o simulador do Streamlit (`AppTest`).
+- **Decisão:** _(aceito / corrigido / descartado)_
+- **Motivo e revisão:**
+  - **Teste dentro do container `app`:** 3 perguntas pela interface.
+    - "valor pago por mês na função Saúde": 12 linhas e gráfico de linha.
+    - "5 órgãos superiores com maior orçamento": gráfico de barras.
+    - "Apague a tabela de órgãos": bloqueada, com o motivo na tela.
+  - **Ponto a conferir:** o modelo ainda usa `funcao.nome = 'Saúde'` (com `=`) apesar da regra; funcionou porque o nome é exato, mas é frágil. Avaliar no Marco 3.
+  - **Log da interface:** o log do servidor no container ficou vazio nesse teste, porque as perguntas foram feitas por outro processo. O log de evidência precisa sair do uso real pelo navegador.
+
+---
+
+## 011 · Guia de instalação completo e identidade do Git
+
+- **Data:** 02/11/2026
+- **Integrante:** Rodrigo Santos
+- **Ferramenta:** Claude Code (extensão do VS Code)
+- **Prompt (resumo):** "Add no README, junto com o guia de instalação do Docker, se precisa instalar algo mais e a rota para abrir o chat para perguntas." Depois: "Os commits feitos na minha máquina estão indo com o e-mail 2411288@escolas.anchieta.br?"
+- **Resposta (resumo):**
+  - **README:** o guia passou a cobrir o projeto inteiro:
+    - o que é obrigatório instalar (só Docker e Git) e o que é opcional (driver NVIDIA, Python para desenvolvimento);
+    - requisitos atualizados: cerca de 16 GB de disco e 8 GB de RAM para o modelo 7B, em vez dos 3 GB e 4 GB de quando só havia o banco;
+    - a seção "Abrir o chat" (http://localhost:8501) e 7 problemas comuns novos;
+    - `APP_PORTA` no `.env.example`.
+  - **Git:** a IA verificou que os commits locais saíam com a conta pessoal (`RodrigoRibeiroSantos`, e-mail noreply). Ela configurou a identidade `rodrigo-santos-2411288` só neste repositório e reescreveu o autor dos 3 commits ainda não enviados, preservando datas e conteúdo. O `b3fac88`, já na `main`, ficou como estava, com uma nota no README.
+- **Decisão:** _(aceito / corrigido / descartado)_
+- **Motivo e revisão:**
+  - **Erro da IA (corrigido):** o comando de checagem da GPU escrito no README (`docker run ... ollama/ollama nvidia-smi`) não funcionava, porque a imagem trata `nvidia-smi` como subcomando do `ollama`. A IA rodou o comando antes de entregar, viu o erro e corrigiu para `--entrypoint nvidia-smi`.
+  - **Afirmação retirada:** o tempo da primeira pergunta na CPU ("alguns minutos") não tinha sido medido e passou a constar como não medido.
+  - **Falha no ambiente:** a primeira tentativa de reescrever os autores falhou porque o PowerShell quebrou as aspas do comando; o Git recusou antes de alterar algo.
+  - **Não testado:** os passos de Linux (NVIDIA Container Toolkit) e a subida em máquina sem GPU.
+
+---
+
+## 012 · Dúvidas sobre o funcionamento e PR único do Marco 2
+
+- **Data:** 02/11/2026
+- **Integrante:** Rodrigo Santos
+- **Ferramenta:** Claude Code (extensão do VS Code)
+- **Prompt (resumo):** "Quais exemplos de pergunta temos?", "As perguntas são hardcoded ou há alguma inteligência para interpretar e converter no SQL?" e "Vamos fazer [o PR]. Quero subir apenas 1 PR contendo tudo que fizemos. Os prompts foram salvos no arquivo?"
+- **Resposta (resumo):**
+  - **Exemplos:** a IA listou os 3 exemplos da interface e as perguntas já testadas, separando o que foi verificado das ideias não testadas. Também avisou que as perguntas usadas nos testes não podem entrar no conjunto de teste do Marco 3.
+  - **Funcionamento:** explicou que nada é fixo além das 3 sugestões de texto e das regras gerais do prompt. O SQL é escrito pelo modelo a cada pergunta, a partir do esquema lido do banco. Citou como prova os erros do modelo (Fiocruz) e o `DROP TABLE` gerado por ele.
+  - **PR:** conferiu que os registros 003 a 011 estavam no arquivo, criou este registro e enviou a branch `prototipo-ponta-a-ponta`, que já contém o commit do validador, para um PR único na `main`.
+- **Decisão:** _(aceito / corrigido / descartado)_
+- **Motivo e revisão:** _(o revisor do PR confere o conjunto; as decisões dos registros 003, 005, 006 e 008 a 012 ainda precisam ser preenchidas pelo grupo)_
+
+---
+
 ## Modelo para novos registros
 
 ```markdown
