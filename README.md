@@ -41,13 +41,28 @@ pytest -v
 ruff check . && ruff format --check .
 ```
 
-### Banco de dados com as despesas de 2025 (Marco 2)
+### Instalação e execução com Docker (Marco 2)
 
-O banco é um PostgreSQL 16 em container. Um segundo container (`carga`) baixa os CSV do Portal da Transparência e popula o banco. Só é preciso ter Docker e Git; Python não é necessário para subir o banco (a carga roda dentro do container).
+O projeto inteiro roda em containers: o banco PostgreSQL, a carga dos dados do Portal da Transparência, o modelo de IA (Ollama) e a interface de chat (Streamlit). Um único `docker compose up` sobe tudo.
 
 #### 1. Instalar as dependências
 
-Requisitos de máquina: 4 GB de RAM livres, cerca de 3 GB de disco (imagens, ZIPs e banco) e acesso à internet.
+**O que precisa instalar**
+
+| Programa | Obrigatório? | Para quê |
+| --- | --- | --- |
+| Docker (Docker Desktop no Windows, Docker Engine no Linux) | Sim | Rodar todos os serviços |
+| Git | Sim | Baixar o repositório |
+| Driver NVIDIA atualizado | Não | Rodar o modelo na GPU, bem mais rápido (veja o passo 2) |
+| Python 3.11 ou mais novo | Não | Só para desenvolver: rodar os testes e as perguntas pela linha de comando |
+
+**O que não precisa instalar:** PostgreSQL, Ollama, Streamlit e as bibliotecas Python da aplicação já vêm nos containers. Se o Ollama já estiver instalado direto no computador, feche-o antes de subir o projeto, porque os dois disputam a porta 11434.
+
+**Requisitos da máquina**
+
+- **Disco:** cerca de 16 GB livres (imagem do Ollama com CUDA, 8,5 GB; modelo `qwen2.5-coder:7b`, 4,7 GB; banco, dados e imagem da aplicação, cerca de 2 GB).
+- **Memória:** 8 GB de RAM livres para o Docker com o modelo 7B. Com menos, use `OLLAMA_MODELO=qwen2.5-coder:3b` no `.env` (1,9 GB). No Windows, o Docker Desktop usa por padrão até metade da RAM do computador.
+- **Internet:** só na primeira execução, para baixar imagens, dados e modelo.
 
 **Windows 10/11 (máquina local)**
 
@@ -87,18 +102,46 @@ sudo usermod -aG docker $USER
 
 Confira com `docker version` e `docker compose version`.
 
-#### 2. Configurar e subir o banco
+**GPU NVIDIA (opcional)**
+
+- **Windows:** basta o driver NVIDIA atualizado; o Docker Desktop repassa a GPU pelo WSL2.
+- **Linux:** além do driver, instale o [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html).
+
+Para conferir se o Docker enxerga a placa: `docker run --rm --gpus all --entrypoint nvidia-smi ollama/ollama:0.40.13 -L` (deve listar a GPU). Depois, ative a GPU no `.env` (passo 2).
+
+#### 2. Configurar e subir
 
 ```bash
 git clone <url-do-repositorio> text-to-sql-seguro
 cd text-to-sql-seguro
 cp .env.example .env              # edite e troque POSTGRES_PASSWORD e POSTGRES_LEITOR_SENHA
 mkdir -p data/raw                 # Windows (PowerShell): mkdir data\raw
-docker compose up -d --wait db    # sobe o PostgreSQL e espera ficar saudável
-docker compose run --rm carga     # baixa ~90 MB do Portal da Transparência e carrega
+docker compose up -d              # sobe tudo em segundo plano
+docker compose logs -f carga ollama-modelo   # acompanha a primeira carga e o download do modelo (Ctrl+C para sair)
 ```
 
 Para gerar senhas: `openssl rand -hex 16` (Linux) ou qualquer gerador de senhas. O `.env` está no `.gitignore` e nunca vai para o Git.
+
+Para usar a GPU, descomente no `.env`, **antes** do `docker compose up`, a linha `COMPOSE_FILE` do seu sistema (`;` no Windows, `:` no Linux e no macOS).
+
+O `docker compose up` faz, na ordem:
+
+1. Sobe o PostgreSQL e o Ollama.
+2. **Carga:** baixa cerca de 90 MB do Portal da Transparência e carrega o banco. Só roda se o banco estiver vazio.
+3. **Modelo:** baixa o `OLLAMA_MODELO`. Só roda se o modelo ainda não estiver no volume.
+4. Inicia a interface de chat.
+
+Na primeira vez, isso leva de 10 a 30 minutos, dependendo da internet. Nas seguintes, sobe em segundos e sem internet.
+
+Para subir passo a passo, em vez de tudo de uma vez:
+
+```bash
+docker compose up -d --wait db           # só o PostgreSQL
+docker compose run --rm carga            # carrega os dados
+docker compose up -d --wait ollama       # servidor do modelo
+docker compose run --rm ollama-modelo    # baixa o modelo
+docker compose up -d app                 # interface
+```
 
 A carga leva cerca de 1 a 2 minutos depois do download e termina com a contagem de linhas:
 
@@ -111,12 +154,45 @@ orcamento             26160 linhas
 execucao_mensal      791013 linhas
 ```
 
-A carga guarda os ZIPs em `data/raw/` (fora do Git) e não baixa de novo o que já existe. Ela roda numa única transação e recria as tabelas, então pode ser repetida a qualquer momento. Para só baixar, sem banco: `python -m assistente_sql.carga --so-baixar`.
+A carga guarda os ZIPs em `data/raw/` (fora do Git) e não baixa de novo o que já existe. Ela roda numa única transação e recria as tabelas. Para forçar uma recarga: `docker compose run --rm carga python -m assistente_sql.carga`. Para só baixar, sem banco: `python -m assistente_sql.carga --so-baixar`.
 
-#### 3. Conferir
+#### 3. Abrir o chat
+
+Com tudo no ar, abra **http://localhost:8501** no navegador. Para usar outra porta, defina `APP_PORTA` no `.env`.
+
+Digite a pergunta em português e clique em **Perguntar**. Exemplos:
+
+- "Quais os 5 estados que mais receberam pagamentos em 2025?"
+- "Qual foi o valor pago por mês na função Saúde?"
+- "Qual o orçamento atualizado e o realizado do Ministério da Educação?"
+
+Para cada pergunta, a tela mostra:
+
+- se a consulta foi executada ou **bloqueada** pela validação, e o motivo;
+- o SQL gerado;
+- a tabela de resultado;
+- um gráfico, quando o resultado tem uma categoria e um valor;
+- em **Detalhes**, o tempo de cada etapa e o custo estimado.
+
+A primeira pergunta demora mais, porque o modelo é carregado na memória: cerca de 50 s numa RTX 3050 de 6 GB, e mais tempo na CPU (não medido ainda). As seguintes levam de 5 a 7 s nessa GPU.
+
+Todos os endereços escutam só em `127.0.0.1`:
+
+| Serviço | Endereço |
+| --- | --- |
+| Chat (Streamlit) | http://localhost:8501 |
+| Banco (PostgreSQL) | `127.0.0.1:5432` |
+| Modelo (API do Ollama) | http://localhost:11434 |
+
+Numa VM remota, use túnel SSH em vez de abrir portas para a rede: `ssh -L 8501:localhost:8501 usuario@vm` e abra http://localhost:8501 no seu computador.
+
+Para parar: `docker compose stop`. Para apagar tudo, inclusive banco e modelo: `docker compose down -v`.
+
+#### 4. Conferir
 
 ```bash
-docker compose ps                                              # db com status "healthy"
+docker compose ps -a                                           # db, ollama e app "Up"; carga e ollama-modelo "Exited (0)"
+curl http://localhost:8501/_stcore/health                      # responde "ok"
 docker compose exec db psql -U carga -d despesas -c "\dt+"     # as 6 tabelas
 docker compose exec db psql -U carga -d despesas \
   -c "SELECT f.nome, round(sum(e.valor_pago)/1e9, 1) AS pago_bi FROM execucao_mensal e
@@ -135,35 +211,23 @@ O banco escuta só em `127.0.0.1:5432`. Para acessar de um cliente gráfico (DBe
 | `defina POSTGRES_PASSWORD no .env` | Faltou criar o `.env` a partir do `.env.example`. |
 | `Permission denied: '/dados/...'` na carga (Linux) | `data/raw` foi criado pelo Docker como root. Rode `sudo chown -R 1000:1000 data/raw`. |
 | Trocou a senha no `.env` e o banco recusa | As senhas só são lidas na criação do volume. Para recriar do zero: `docker compose down -v` e suba de novo (apaga o banco; os ZIPs em `data/raw` ficam). |
+| `port is already allocated` na 11434 | O Ollama instalado direto no computador está aberto. Feche-o ou mude `OLLAMA_PORTA` no `.env`. |
+| `port is already allocated` na 8501 | Outro Streamlit está rodando. Feche-o ou mude `APP_PORTA` no `.env`. |
+| http://localhost:8501 não abre | A primeira subida ainda está baixando dados ou o modelo: acompanhe com `docker compose logs -f carga ollama-modelo`. O `app` só inicia depois que os dois terminam. |
+| "O modelo não respondeu" no chat | Modelo sem memória suficiente: veja `docker compose logs ollama`. Troque para `OLLAMA_MODELO=qwen2.5-coder:3b` ou aumente a memória do Docker Desktop (Settings > Resources). |
+| `could not select device driver "nvidia"` | A GPU foi ativada no `.env`, mas o Docker não enxerga a placa. Instale o driver (e, no Linux, o NVIDIA Container Toolkit) ou comente a linha `COMPOSE_FILE`. |
+| Sem espaço em disco durante o download | São necessários cerca de 16 GB. Libere espaço ou use o modelo 3B. |
 
-### Modelo local (Ollama) e perguntas pela linha de comando
+### Perguntas pela linha de comando (desenvolvimento)
 
-```bash
-docker compose up -d --wait ollama   # servidor do modelo, só em 127.0.0.1:11434
-docker compose run --rm ollama-modelo  # baixa o OLLAMA_MODELO (~4,7 GB, só na primeira vez)
-```
-
-Por padrão o modelo roda na CPU. Com GPU NVIDIA, descomente no `.env` a linha `COMPOSE_FILE` do seu sistema ([docker-compose.gpu.yml](docker-compose.gpu.yml)) antes de subir o Ollama. Com pouca memória ou disco, use `OLLAMA_MODELO=qwen2.5-coder:3b`.
-
-Com o banco e o Ollama no ar, dá para perguntar pela linha de comando (fora do Docker, com o ambiente dos testes):
+Com o banco e o Ollama no ar, dá para perguntar sem a interface, fora do Docker, com o ambiente dos testes:
 
 ```bash
 export DATABASE_URL_LEITOR=postgresql://leitor:<senha>@127.0.0.1:5432/despesas   # PowerShell: $env:DATABASE_URL_LEITOR="..."
 python -m assistente_sql.assistente "Quanto o Ministério da Saúde pagou em 2025?"
 ```
 
-A saída mostra o SQL gerado, a situação (`ok`, `bloqueada`, `erro_execucao` ou `erro_modelo`), o motivo do bloqueio e o tempo de cada etapa. Na RTX 3050 de 6 GB, a primeira pergunta leva cerca de 50 s (o modelo é carregado na GPU) e as seguintes, cerca de 5 a 7 s.
-
-### Aplicação completa (a partir do Marco 2)
-
-```bash
-cp .env.example .env      # troque as duas senhas
-docker compose up
-```
-
-Abra http://localhost:8501. O `docker compose up` sobe o banco e o Ollama, carrega os dados e baixa o modelo (só se ainda não existirem) e então inicia a interface. Na primeira vez, isso baixa cerca de 90 MB de dados, 8,5 GB da imagem do Ollama e 4,7 GB do modelo; nas seguintes, sobe em segundos e funciona sem internet.
-
-A interface mostra, para cada pergunta: o SQL gerado, se a consulta foi executada ou bloqueada (e por quê), a tabela de resultado, um gráfico quando o resultado tem uma categoria e um valor, e os tempos de cada etapa.
+A saída mostra o SQL gerado, a situação (`ok`, `bloqueada`, `erro_execucao` ou `erro_modelo`), o motivo do bloqueio e o tempo de cada etapa.
 
 Variáveis de ambiente: veja `.env.example`. Nenhuma chave de API é necessária.
 
@@ -194,6 +258,8 @@ data/raw/             ZIPs baixados do Portal da Transparência (fora do Git)
 | _(Rogério Rocha)_ | Backend e Infraestrutura | Marco 1: Proposta técnica, repositório, integração e revisão contínua|
 | _(nome)_ | IA e Avaliação | |
 | _(nome)_ | Produto e Interface | |
+
+**Contas no GitHub:** Rodrigo Santos faz commits como `rodrigo-santos-2411288` (`2411288@escolas.anchieta.br`). O commit `b3fac88` (carga dos dados do Marco 2) saiu pela conta pessoal `RodrigoRibeiroSantos`, que também é dele.
 
 ## Uso de IA
 

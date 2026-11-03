@@ -177,6 +177,28 @@ Regras da disciplina: pelo menos 10 interações relevantes até a entrega final
 
 ---
 
+## 011 · Guia de instalação completo e identidade do Git
+
+- **Data:** 02/11/2026
+- **Integrante:** Rodrigo Santos
+- **Ferramenta:** Claude Code (extensão do VS Code)
+- **Prompt (resumo):** "Add no README, junto com o guia de instalação do Docker, se precisa instalar algo mais e a rota para abrir o chat para perguntas." Depois: "Os commits feitos na minha máquina estão indo com o e-mail 2411288@escolas.anchieta.br?"
+- **Resposta (resumo):**
+  - **README:** o guia passou a cobrir o projeto inteiro:
+    - o que é obrigatório instalar (só Docker e Git) e o que é opcional (driver NVIDIA, Python para desenvolvimento);
+    - requisitos atualizados: cerca de 16 GB de disco e 8 GB de RAM para o modelo 7B, em vez dos 3 GB e 4 GB de quando só havia o banco;
+    - a seção "Abrir o chat" (http://localhost:8501) e 7 problemas comuns novos;
+    - `APP_PORTA` no `.env.example`.
+  - **Git:** a IA verificou que os commits locais saíam com a conta pessoal (`RodrigoRibeiroSantos`, e-mail noreply). Ela configurou a identidade `rodrigo-santos-2411288` só neste repositório e reescreveu o autor dos 3 commits ainda não enviados, preservando datas e conteúdo. O `b3fac88`, já na `main`, ficou como estava, com uma nota no README.
+- **Decisão:** _(aceito / corrigido / descartado)_
+- **Motivo e revisão:**
+  - **Erro da IA (corrigido):** o comando de checagem da GPU escrito no README (`docker run ... ollama/ollama nvidia-smi`) não funcionava, porque a imagem trata `nvidia-smi` como subcomando do `ollama`. A IA rodou o comando antes de entregar, viu o erro e corrigiu para `--entrypoint nvidia-smi`.
+  - **Afirmação retirada:** o tempo da primeira pergunta na CPU ("alguns minutos") não tinha sido medido e passou a constar como não medido.
+  - **Falha no ambiente:** a primeira tentativa de reescrever os autores falhou porque o PowerShell quebrou as aspas do comando; o Git recusou antes de alterar algo.
+  - **Não testado:** os passos de Linux (NVIDIA Container Toolkit) e a subida em máquina sem GPU.
+
+---
+
 ## Modelo para novos registros
 
 ```markdown
