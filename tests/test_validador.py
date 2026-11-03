@@ -40,6 +40,11 @@ def aprova(sql: str, limite: int = 1000):
         "SELECT COALESCE(uf, 'Nacional') AS uf, SUM(valor_pago) FROM execucao_mensal GROUP BY 1",
         "SELECT p.nome_acao FROM programa_acao p JOIN orcamento r "
         "ON (r.codigo_programa, r.codigo_acao) = (p.codigo_programa, p.codigo_acao)",
+        # CTE que usa outra definida antes, CTE recursiva e WITH dentro de subconsulta
+        "WITH a AS (SELECT codigo FROM orgao), b AS (SELECT * FROM a) SELECT * FROM b",
+        "WITH RECURSIVE n(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM n WHERE i < 5) "
+        "SELECT * FROM n",
+        "SELECT * FROM (WITH t AS (SELECT nome FROM funcao) SELECT * FROM t) s",
     ],
 )
 def test_aprova_consultas_de_leitura(sql):
@@ -122,6 +127,12 @@ def test_limit_em_union_vale_para_o_resultado_todo():
         "SELECT * FROM main.orgao",
         "SELECT * FROM outro_banco.public.orgao",
         "SELECT * FROM generate_series(1, 1000000000)",
+        # nome de CTE usado para liberar tabela do catálogo fora do alcance do WITH
+        "WITH a AS (SELECT * FROM pg_settings), pg_settings AS (SELECT 1 AS x) SELECT * FROM a",
+        "SELECT * FROM (WITH pg_user AS (SELECT 1) SELECT * FROM pg_user) s CROSS JOIN pg_user",
+        "SELECT nome FROM orgao WHERE EXISTS (WITH pg_stat_activity AS (SELECT 1) SELECT 1) "
+        "AND nome IN (SELECT query FROM pg_stat_activity)",
+        "WITH usuarios AS (SELECT 1) SELECT * FROM public.usuarios",
         # tabelas fora da lista
         "SELECT * FROM usuarios",
         # limite fora do formato
