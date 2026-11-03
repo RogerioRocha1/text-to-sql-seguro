@@ -25,6 +25,12 @@ def test_para_tabela_converte_decimal_em_numero():
     assert tabela["uf"].tolist() == ["SP", "RJ"]
 
 
+def test_para_tabela_renomeia_colunas_repetidas():
+    tabela = _tabela(["nome", "nome", "pago"], [("MEC", "Educação", Decimal("2"))])
+    assert list(tabela.columns) == ["nome", "nome_2", "pago"]
+    assert tabela["pago"].tolist() == [2.0]
+
+
 def test_para_tabela_mantem_nulos():
     tabela = _tabela(["total"], [(None,)])
     assert tabela["total"].isna().all()
