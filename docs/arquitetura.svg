@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 200" width="1000" height="200" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle">
+  <title>Arquitetura do assistente text-to-SQL</title>
+  <defs>
+    <marker id="seta" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#555"/>
+    </marker>
+  </defs>
+  <rect width="1000" height="200" fill="#ffffff"/>
+  <g fill="#eef1f5" stroke="#555" stroke-width="1.2">
+    <rect x="10" y="70" width="130" height="50" rx="4"/>
+    <rect x="175" y="20" width="160" height="50" rx="4"/>
+    <rect x="355" y="70" width="120" height="50" rx="4"/>
+    <polygon points="590,45 640,95 590,145 540,95"/>
+    <rect x="690" y="20" width="170" height="50" rx="4"/>
+    <rect x="690" y="140" width="170" height="50" rx="4"/>
+    <rect x="890" y="20" width="100" height="50" rx="4"/>
+  </g>
+  <g fill="none" stroke="#555" stroke-width="1.2" marker-end="url(#seta)">
+    <path d="M140,85 L175,55"/>
+    <path d="M335,55 L355,80"/>
+    <path d="M475,95 L540,95"/>
+    <path d="M630,85 L690,50"/>
+    <path d="M630,105 L690,160"/>
+    <path d="M860,45 L890,45"/>
+    <path d="M415,120 C415,175 75,175 75,122" stroke-dasharray="4 3"/>
+  </g>
+  <g fill="#222">
+    <text x="75" y="99">Pergunta do usuário</text>
+    <text x="255" y="41">Montagem do prompt</text>
+    <text x="255" y="58">esquema + exemplos</text>
+    <text x="415" y="91">Modelo local</text>
+    <text x="415" y="108">Ollama</text>
+    <text x="590" y="91">Validador</text>
+    <text x="590" y="108">SQLGlot</text>
+    <text x="775" y="41">Executor PostgreSQL</text>
+    <text x="775" y="58">usuário somente leitura</text>
+    <text x="775" y="161">Consulta bloqueada</text>
+    <text x="775" y="178">motivo explicado</text>
+    <text x="940" y="41">Tabela, gráfico</text>
+    <text x="940" y="58">e explicação</text>
+  </g>
+  <g fill="#444" font-size="12">
+    <text x="507" y="85">SQL gerado</text>
+    <text x="640" y="56">aprovado</text>
+    <text x="625" y="150">reprovado</text>
+    <text x="245" y="184">pergunta ambígua</text>
+  </g>
+</svg>
