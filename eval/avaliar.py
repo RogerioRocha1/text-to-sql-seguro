@@ -59,15 +59,11 @@ def carregar_perguntas() -> list[dict[str, Any]]:
             try:
                 pergunta = json.loads(linha)
             except json.JSONDecodeError as erro:
-                raise ValueError(
-                    f"JSON inválido na linha {numero}: {erro}"
-                ) from erro
+                raise ValueError(f"JSON inválido na linha {numero}: {erro}") from erro
             perguntas.append(pergunta)
 
     if len(perguntas) != 50:
-        raise ValueError(
-            f"Esperadas 50 perguntas, mas foram encontradas {len(perguntas)}."
-        )
+        raise ValueError(f"Esperadas 50 perguntas, mas foram encontradas {len(perguntas)}.")
 
     ids = [p["id"] for p in perguntas]
     if len(set(ids)) != len(ids):
@@ -77,9 +73,7 @@ def carregar_perguntas() -> list[dict[str, Any]]:
 
 
 def _decimal_centavos(valor: Any) -> Decimal:
-    return Decimal(str(valor)).quantize(
-        Decimal("0.01"), rounding=ROUND_HALF_UP
-    )
+    return Decimal(str(valor)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
 
 def valor_igual(real: Any, esperado: Any) -> bool:
@@ -98,9 +92,7 @@ def valor_igual(real: Any, esperado: Any) -> bool:
         return real == esperado
 
     tipos_numericos = (int, float, Decimal)
-    algum_numerico = isinstance(real, tipos_numericos) or isinstance(
-        esperado, tipos_numericos
-    )
+    algum_numerico = isinstance(real, tipos_numericos) or isinstance(esperado, tipos_numericos)
 
     if algum_numerico:
         try:
@@ -114,8 +106,9 @@ def valor_igual(real: Any, esperado: Any) -> bool:
     if isinstance(real, str) and isinstance(esperado, str):
         if real.strip() == esperado.strip():
             return True
-        strings_decimais = ("." in real or "e" in real.lower() or
-                            "." in esperado or "e" in esperado.lower())
+        strings_decimais = (
+            "." in real or "e" in real.lower() or "." in esperado or "e" in esperado.lower()
+        )
         if strings_decimais:
             try:
                 return _decimal_centavos(real) == _decimal_centavos(esperado)
@@ -148,8 +141,7 @@ def resultados_iguais(
 
     if comparar_ordem:
         return all(
-            _linhas_iguais(real, esperado)
-            for real, esperado in zip(reais, esperados, strict=True)
+            _linhas_iguais(real, esperado) for real, esperado in zip(reais, esperados, strict=True)
         )
 
     # Comparação como multiconjunto: ignora a ordem, mas preserva duplicatas.
@@ -191,15 +183,11 @@ def executar_referencia(
                 config.limite_linhas,
             )
             if not validacao.aprovada:
-                raise RuntimeError(
-                    f"SQL de referência bloqueado: {validacao.motivo}"
-                )
+                raise RuntimeError(f"SQL de referência bloqueado: {validacao.motivo}")
 
             custo = verificar_custo(cursor, validacao, config.custo_maximo)
             if not custo.aprovada:
-                raise RuntimeError(
-                    f"SQL de referência excedeu o custo: {custo.motivo}"
-                )
+                raise RuntimeError(f"SQL de referência excedeu o custo: {custo.motivo}")
 
             cursor.execute(custo.sql)
             return [list(linha) for linha in cursor.fetchall()]
@@ -223,14 +211,15 @@ def conferir_referencias(
             if resultados_iguais(resultado, esperado, comparar_ordem=True):
                 print(f"[OK] {pergunta['id']}", flush=True)
             else:
-                problemas.append({
-                    "id": pergunta["id"],
-                    "esperado": esperado,
-                    "obtido": serializar(resultado),
-                })
+                problemas.append(
+                    {
+                        "id": pergunta["id"],
+                        "esperado": esperado,
+                        "obtido": serializar(resultado),
+                    }
+                )
                 print(
-                    f"[DIVERGÊNCIA] {pergunta['id']}: "
-                    "resultado armazenado diferente do banco",
+                    f"[DIVERGÊNCIA] {pergunta['id']}: resultado armazenado diferente do banco",
                     flush=True,
                 )
         except Exception as erro:
@@ -240,9 +229,7 @@ def conferir_referencias(
     if problemas:
         print("\nForam encontrados problemas nas referências:")
         print(json.dumps(problemas, ensure_ascii=False, indent=2))
-        raise SystemExit(
-            "Avaliação interrompida. Corrija as referências antes de continuar."
-        )
+        raise SystemExit("Avaliação interrompida. Corrija as referências antes de continuar.")
 
     print(
         f"\nTodas as {len(perguntas)} referências foram conferidas.",
@@ -276,13 +263,10 @@ def avaliar_condicao(
                 config.custo_maximo,
             )
             linhas = [list(linha) for linha in resposta.linhas]
-            acertou = (
-                resposta.situacao == "ok"
-                and resultados_iguais(
-                    linhas,
-                    pergunta["resultado_esperado"],
-                    comparar_ordem=pergunta.get("comparar_ordem", False),
-                )
+            acertou = resposta.situacao == "ok" and resultados_iguais(
+                linhas,
+                pergunta["resultado_esperado"],
+                comparar_ordem=pergunta.get("comparar_ordem", False),
             )
 
             registro = {
@@ -299,9 +283,7 @@ def avaliar_condicao(
                 "resultado_esperado": json.dumps(
                     pergunta["resultado_esperado"], ensure_ascii=False
                 ),
-                "resultado_obtido": json.dumps(
-                    serializar(linhas), ensure_ascii=False
-                ),
+                "resultado_obtido": json.dumps(serializar(linhas), ensure_ascii=False),
                 "motivo": resposta.motivo,
                 "custo_estimado": resposta.custo_estimado,
                 "tempo_modelo_s": resposta.tempos.get("modelo"),
@@ -351,11 +333,7 @@ def calcular_metricas(resultados: list[dict[str, Any]]) -> dict[str, Any]:
     executadas = sum(r["situacao"] == "ok" for r in resultados)
 
     def media(campo: str) -> float | None:
-        valores = [
-            float(r[campo])
-            for r in resultados
-            if r.get(campo) not in (None, "")
-        ]
+        valores = [float(r[campo]) for r in resultados if r.get(campo) not in (None, "")]
         return round(sum(valores) / len(valores), 3) if valores else None
 
     return {
@@ -365,15 +343,9 @@ def calcular_metricas(resultados: list[dict[str, Any]]) -> dict[str, Any]:
         "consultas_executadas": executadas,
         "taxa_execucao": round(100 * executadas / total, 2),
         "bloqueadas": sum(r["situacao"] == "bloqueada" for r in resultados),
-        "erros_execucao": sum(
-            r["situacao"] == "erro_execucao" for r in resultados
-        ),
-        "erros_modelo": sum(
-            r["situacao"] == "erro_modelo" for r in resultados
-        ),
-        "erros_avaliador": sum(
-            r["situacao"] == "erro_avaliador" for r in resultados
-        ),
+        "erros_execucao": sum(r["situacao"] == "erro_execucao" for r in resultados),
+        "erros_modelo": sum(r["situacao"] == "erro_modelo" for r in resultados),
+        "erros_avaliador": sum(r["situacao"] == "erro_avaliador" for r in resultados),
         "tempo_medio_modelo_s": media("tempo_modelo_s"),
         "tempo_medio_custo_s": media("tempo_custo_s"),
         "tempo_medio_execucao_s": media("tempo_execucao_s"),
@@ -389,10 +361,7 @@ def calcular_resumo(resultados: list[dict[str, Any]]) -> dict[str, Any]:
         grupos: dict[str, list[dict[str, Any]]] = defaultdict(list)
         for resultado in resultados:
             grupos[resultado[campo]].append(resultado)
-        resumo[destino] = {
-            nome: calcular_metricas(itens)
-            for nome, itens in sorted(grupos.items())
-        }
+        resumo[destino] = {nome: calcular_metricas(itens) for nome, itens in sorted(grupos.items())}
     return resumo
 
 
@@ -413,9 +382,7 @@ def reavaliar_csv_historico(
     for linha in linhas:
         pergunta = perguntas_por_id.get(linha.get("id", ""))
         if pergunta is None:
-            raise ValueError(
-                f"O CSV contém ID ausente no JSONL: {linha.get('id')}"
-            )
+            raise ValueError(f"O CSV contém ID ausente no JSONL: {linha.get('id')}")
 
         acertou = False
         if linha.get("situacao") == "ok":
@@ -434,23 +401,17 @@ def reavaliar_csv_historico(
 
         registro_metricas = dict(linha)
         registro_metricas["acertou"] = acertou
-        resultados_por_modo[linha.get("modo", "desconhecido")].append(
-            registro_metricas
-        )
+        resultados_por_modo[linha.get("modo", "desconhecido")].append(registro_metricas)
 
     identificador = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
-    destino_csv = caminho_csv.with_name(
-        f"{caminho_csv.stem}_reavaliado_{identificador}.csv"
-    )
+    destino_csv = caminho_csv.with_name(f"{caminho_csv.stem}_reavaliado_{identificador}.csv")
     destino_json = destino_csv.with_suffix(".json")
 
     if "acertou" not in campos:
         campos.append("acertou")
 
     with destino_csv.open("w", newline="", encoding="utf-8-sig") as arquivo:
-        escritor = csv.DictWriter(
-            arquivo, fieldnames=campos, extrasaction="ignore"
-        )
+        escritor = csv.DictWriter(arquivo, fieldnames=campos, extrasaction="ignore")
         escritor.writeheader()
         escritor.writerows(linhas_atualizadas)
 
@@ -459,25 +420,19 @@ def reavaliar_csv_historico(
         "data_reavaliacao_utc": datetime.now(UTC).isoformat(),
         "criterio_numerico": "arredondamento decimal a duas casas (ROUND_HALF_UP)",
         "criterio_ordem": (
-            "ordem ignorada por padrão; preservada somente quando "
-            "comparar_ordem=true no JSONL"
+            "ordem ignorada por padrão; preservada somente quando comparar_ordem=true no JSONL"
         ),
         "condicoes": {
-            modo: calcular_resumo(registros)
-            for modo, registros in resultados_por_modo.items()
+            modo: calcular_resumo(registros) for modo, registros in resultados_por_modo.items()
         },
         "arquivo_resultados": destino_csv.name,
     }
-    destino_json.write_text(
-        json.dumps(resumo, ensure_ascii=False, indent=2), encoding="utf-8"
-    )
+    destino_json.write_text(json.dumps(resumo, ensure_ascii=False, indent=2), encoding="utf-8")
     return destino_csv, destino_json, resumo
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="Avalia o assistente Text-to-SQL."
-    )
+    parser = argparse.ArgumentParser(description="Avalia o assistente Text-to-SQL.")
     parser.add_argument(
         "--modo",
         choices=["completo", "baseline", "ambos"],
@@ -506,9 +461,7 @@ def main() -> None:
             caminho = Path.cwd() / caminho
         if not caminho.is_file():
             raise SystemExit(f"CSV não encontrado: {caminho}")
-        novo_csv, novo_json, resumo = reavaliar_csv_historico(
-            caminho, perguntas
-        )
+        novo_csv, novo_json, resumo = reavaliar_csv_historico(caminho, perguntas)
         print("=== REAVALIAÇÃO HISTÓRICA CONCLUÍDA ===")
         for modo, metricas in resumo["condicoes"].items():
             print(
@@ -526,14 +479,8 @@ def main() -> None:
     if not config.database_url_leitor:
         raise SystemExit("DATABASE_URL_LEITOR não está configurada.")
 
-    perguntas_execucao = (
-        perguntas[:args.limite] if args.limite else perguntas
-    )
-    modos = (
-        ["completo", "baseline"]
-        if args.modo == "ambos"
-        else [args.modo]
-    )
+    perguntas_execucao = perguntas[: args.limite] if args.limite else perguntas
+    modos = ["completo", "baseline"] if args.modo == "ambos" else [args.modo]
 
     PASTA_RESULTADOS.mkdir(parents=True, exist_ok=True)
     identificador = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
@@ -561,9 +508,7 @@ def main() -> None:
         conferir_referencias(perguntas_execucao, conexao, config)
         modelo = ModeloOllama(config.ollama_url, config.ollama_modelo)
 
-        with caminho_csv.open(
-            "w", newline="", encoding="utf-8-sig"
-        ) as arquivo_csv:
+        with caminho_csv.open("w", newline="", encoding="utf-8-sig") as arquivo_csv:
             escritor = csv.DictWriter(
                 arquivo_csv,
                 fieldnames=COLUNAS_CSV,
@@ -596,8 +541,7 @@ def main() -> None:
         "custo_maximo": config.custo_maximo,
         "referencias_conferidas": True,
         "condicoes": {
-            modo: calcular_resumo(resultados)
-            for modo, resultados in todos_resultados.items()
+            modo: calcular_resumo(resultados) for modo, resultados in todos_resultados.items()
         },
         "arquivo_resultados": caminho_csv.name,
     }
