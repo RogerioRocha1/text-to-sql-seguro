@@ -2,7 +2,7 @@
 
 Regras da disciplina: pelo menos 10 interações relevantes até a entrega final. Cada registro traz o prompt, um resumo da resposta e a decisão do grupo (aceito, corrigido ou descartado), com o motivo. Código gerado por IA só entra na `main` com teste passando na CI e revisão de outro integrante.
 
-**Ferramentas usadas:** Claude (chat), Claude Code (extensão do VS Code). _(acrescentar outras que o grupo usar)_
+**Ferramentas usadas:** Claude (chat), Claude Code (extensão do VS Code), ChatGPT (GPT-6). _(acrescentar outras que o grupo usar)_
 
 ---
 
@@ -211,6 +211,78 @@ Regras da disciplina: pelo menos 10 interações relevantes até a entrega final
   - **PR:** conferiu que os registros 003 a 011 estavam no arquivo, criou este registro e enviou a branch `prototipo-ponta-a-ponta`, que já contém o commit do validador, para um PR único na `main`.
 - **Decisão:** _(aceito / corrigido / descartado)_
 - **Motivo e revisão:** _(o revisor do PR confere o conjunto; as decisões dos registros 003, 005, 006 e 008 a 012 ainda precisam ser preenchidas pelo grupo)_
+
+---
+
+## 013 · Construção do conjunto de 50 perguntas de referência (Marco 3)
+
+- **Data:** 07/11/2026
+- **Integrante:** Thamiris de Oliveira e Silva
+- **Ferramenta:** ChatGPT (GPT-6)
+- **Prompt (resumo):** Solicitação de orientação para construir um conjunto de 50 perguntas de avaliação para o assistente Text-to-SQL, utilizando o esquema e os dados reais do PostgreSQL, com SQL de referência, resultados esperados, categorias e níveis de dificuldade. As perguntas já utilizadas no desenvolvimento deveriam ser evitadas.
+- **Resposta (resumo):** A IA orientou a exploração das dimensões disponíveis no banco de 2025 e propôs o formato JSONL. O grupo construiu `eval/perguntas.jsonl` com 50 perguntas, cada uma contendo identificador, pergunta em linguagem natural, SQL de referência, resultado esperado, categoria e dificuldade. Cada consulta foi executada no PostgreSQL antes de ser registrada.
+- **Decisão:** aceito, com correções durante a construção.
+- **Motivo e revisão:** O grupo executou as consultas e conferiu os resultados diretamente no banco. Quando foi identificado que o nome de um elemento de despesa estava realmente truncado na base, a pergunta correspondente foi substituída por uma consulta sobre o valor liquidado. A pergunta sobre restos a pagar inscritos também teve sua redação ajustada para deixar explícito que o resultado representa um saldo líquido de valores positivos e negativos. Ao final, as 50 referências foram conferidas novamente pelo avaliador, sem divergências.
+
+---
+
+## 014 · Implementação do avaliador experimental automatizado (Marco 3)
+
+- **Data:** 07/11/2026
+- **Integrante:** Thamiris de Oliveira e Silva
+- **Ferramenta:** ChatGPT (GPT-6)
+- **Prompt (resumo):** Solicitação para desenvolver um avaliador automático reutilizando a implementação existente em `assistente.py`, especialmente a função `responder()`, sem duplicar a lógica de geração, validação de SQL e execução somente leitura.
+- **Resposta (resumo):** A IA propôs e auxiliou na implementação de `eval/avaliar.py`, que carrega as perguntas JSONL, confere as consultas de referência, executa o assistente completo e o baseline e registra resultados em CSV e JSON. Foram incluídas métricas de acurácia, situação das consultas, tempos, tokens e custo estimado. Também foi adicionada a montagem de volume `./eval:/app/eval` ao serviço `app` no Docker Compose, permitindo executar o avaliador no container e preservar os arquivos no computador.
+- **Decisão:** aceito, com revisão e correção posterior.
+- **Motivo e revisão:** A implementação foi exercitada primeiro com duas perguntas e depois com as 50. A equipe verificou o acesso aos arquivos dentro do container e conferiu que as referências eram executadas antes da chamada ao modelo. A primeira versão do avaliador apresentou uma comparação excessivamente rígida de precisão decimal e ordenação, problema documentado e corrigido na interação 016.
+
+---
+
+## 015 · Definição e execução do baseline sem esquema dinâmico (Marco 3)
+
+- **Data:** 07/11/2026
+- **Integrante:** Thamiris de Oliveira e Silva
+- **Ferramenta:** ChatGPT (GPT-6)
+- **Prompt (resumo):** Solicitação de uma condição baseline para comparar o assistente completo com uma versão que utiliza o mesmo modelo e as mesmas instruções fixas, mas não recebe o esquema dinâmico do PostgreSQL.
+- **Resposta (resumo):** A IA propôs utilizar o mesmo Qwen2.5-Coder:3b nas duas condições. No baseline, o esquema dinâmico é enviado vazio, mas continuam ativos o validador SQL, a verificação de custo com `EXPLAIN`, o limite de linhas e a conexão com o usuário de leitura. Na primeira avaliação completa, o baseline teve zero acertos e 50 consultas bloqueadas. Os motivos individuais dos bloqueios ficaram registrados nos arquivos CSV e devem ser analisados caso a caso, sem presumir uma causa única para todos os resultados.
+- **Decisão:** aceito.
+- **Motivo e revisão:** A comparação mantém os mecanismos de segurança nas duas condições e procura avaliar a contribuição do esquema dinâmico. O grupo decidiu preservar os bloqueios como resultados observados, sem corrigir manualmente os SQLs do baseline. A limitação é registrada: trata-se de um baseline simples, sem contexto do esquema, e o resultado não deve ser generalizado para todo modelo ou configuração sem esquema.
+
+---
+
+## 016 · Correção dos critérios de comparação dos resultados (Marco 3)
+
+- **Data:** 07/11/2026
+- **Integrante:** Thamiris de Oliveira e Silva
+- **Ferramenta:** ChatGPT (GPT-6)
+- **Prompt (resumo):** Solicitação para investigar respostas classificadas como incorretas mesmo quando apresentavam valores numericamente equivalentes, ou os mesmos registros em ordem diferente, e corrigir o avaliador sem executar novamente o modelo.
+- **Resposta (resumo):** A IA identificou que a primeira comparação exigia igualdade estrita entre valores e ordem das linhas. Propôs utilizar `Decimal` com arredondamento a duas casas decimais para comparações numéricas e permitir ignorar a ordem das linhas quando a pergunta não solicita ranking. Para rankings, foi criado o atributo `comparar_ordem`, marcado como verdadeiro nas questões Q028, Q030, Q032, Q035 e Q042. Também foi implementada a reavaliação de CSV histórico, sem chamadas adicionais ao Ollama.
+- **Decisão:** aceito, após revisão.
+- **Motivo e revisão:** A equipe identificou quatro falsos negativos na primeira avaliação: Q008, Q014, Q022 e Q038. Com os novos critérios, a reavaliação histórica passou de 27/50 (54%) para 31/50 (62%) acertos no assistente completo. O CSV original foi preservado e um novo CSV e JSON foram gerados. A comparação continua exigindo igualdade dos valores e da quantidade de linhas; somente a precisão decimal e a ordem, quando não significativa, receberam tratamento específico.
+
+---
+
+## 017 · Execução da avaliação experimental completa (Marco 3)
+
+- **Data:** 07/11/2026
+- **Integrante:** Thamiris de Oliveira e Silva
+- **Ferramenta:** ChatGPT (GPT-6)
+- **Prompt (resumo):** Solicitação de orientação para executar a avaliação completa com as 50 perguntas, comparando o assistente com esquema dinâmico e o baseline, utilizando os resultados de referência previamente conferidos.
+- **Resposta (resumo):** A IA orientou a execução das duas condições experimentais com o mesmo modelo local Qwen2.5-Coder:3b. Todas as 50 consultas de referência foram executadas e conferidas pelo avaliador antes da geração. Na avaliação original, o assistente completo obteve 27/50 acertos (54%) e o baseline 0/50. Após a correção dos critérios de comparação descrita na interação 016, a avaliação histórica passou a registrar 31/50 acertos (62%) para o assistente completo e 0/50 para o baseline.
+- **Decisão:** aceito como resultado experimental da primeira rodada.
+- **Motivo e revisão:** Os arquivos CSV e JSON originais foram preservados, assim como os arquivos gerados na reavaliação histórica. A correção dos critérios de comparação não exigiu novas chamadas ao modelo. O grupo decidiu manter os resultados como evidência da primeira rodada, sem ajustar o prompt durante a avaliação e sem substituir os resultados originais pelos reavaliados.
+
+---
+
+## 018 · Análise e classificação das falhas da avaliação experimental (Marco 3)
+
+- **Data:** 07/11/2026
+- **Integrante:** Thamiris de Oliveira e Silva
+- **Ferramenta:** ChatGPT (GPT-6)
+- **Prompt (resumo):** Solicitação de análise dos 19 erros restantes do assistente completo após a reavaliação histórica, utilizando os SQLs gerados, resultados obtidos e mensagens de erro registrados no CSV.
+- **Resposta (resumo):** A IA classificou os 19 resultados incorretos em três grupos principais: consultas executadas com resultado diferente do esperado, consultas bloqueadas pelo validador ou pelo banco e consultas interrompidas por timeout. Foram identificados problemas de interpretação da pergunta, agregações incorretas, joins inadequados, referências a colunas inexistentes e uso incorreto de aliases. Foi produzido `eval/analise_erros.md` com os resultados, exemplos e causas observadas.
+- **Decisão:** aceito como diagnóstico da primeira rodada, com necessidade de revisão técnica pelo grupo.
+- **Motivo e revisão:** A análise preserva os erros reais e distingue consultas executadas incorretamente de consultas bloqueadas ou interrompidas. O grupo decidiu não corrigir manualmente as respostas e não ajustar o prompt antes de documentar os resultados. As causas classificadas a partir dos SQLs e mensagens de erro devem ser tratadas como diagnóstico dos casos observados, não como prova de causa raiz para todos os problemas. O documento foi salvo em `eval/analise_erros.md`.
 
 ---
 
