@@ -247,7 +247,7 @@ data/raw/             ZIPs baixados do Portal da Transparência (fora do Git)
 | --- | --- | --- |
 | _(Rodrigo e Thallia)_ | Dados e Qualidade | Marco 2: Thallia Silva de Oliveira: download e análise dos dados de 2025 do Portal da Transparência, conferência da carga no banco local, documentação da decisão sobre órgãos sem código (`docs/decisoes-de-dados.md`) e registro de uso de IA (`PROMPTS.md`). Rodrigo: estrutura docker, git Windows e preparo do Marco 2 |
 | _(Rogério Rocha)_ | Backend e Infraestrutura | Marco 1: Proposta técnica, repositório, integração e revisão contínua. Marco 2: revisão do PR #2 e correções no validador (brecha de CTE) e na tabela de resultados |
-| _(nome)_ | IA e Avaliação | |
+| _(Thamiris de Oliveira e Silva)_ | IA e Avaliação | Marco 3 (branch `feat/marco3-perguntas-referencia`): conjunto de 50 perguntas de referência com SQL e resultado esperado conferidos no banco (`eval/perguntas.jsonl`); avaliador automático `eval/avaliar.py`, que compara o assistente completo com um baseline sem esquema dinâmico e gera métricas em CSV/JSON; critério de comparação (valores em centavos, ordem exigida só em rankings) e reavaliação de resultados históricos; primeira rodada completa (31/50 acertos, 62%, contra 0/50 do baseline); análise dos 19 erros (`eval/analise_erros.md`) e registros 013 a 018 no `PROMPTS.md` |
 | _(nome)_ | Produto e Interface | |
 
 **Contas no GitHub:** Rodrigo Santos faz commits como `rodrigo-santos-2411288` (`2411288@escolas.anchieta.br`). O commit `b3fac88` (carga dos dados do Marco 2) saiu pela conta pessoal `RodrigoRibeiroSantos`, que também é dele.
