@@ -23,7 +23,8 @@ from assistente_sql.gerador import ModeloOllama, formatar_esquema, ler_esquema
 from assistente_sql.validador import validar, verificar_custo
 
 PASTA = Path(__file__).resolve().parent
-ARQUIVO_PERGUNTAS = PASTA / "perguntas.jsonl"
+ARQUIVO_PERGUNTAS = PASTA / "perguntas.jsonl"  # conjunto de teste (Q001-Q050)
+ARQUIVO_PERGUNTAS_DEV = PASTA / "perguntas_dev.jsonl"  # desenvolvimento (D01-D10)
 PASTA_RESULTADOS = PASTA / "resultados"
 
 COLUNAS_CSV = [
@@ -49,10 +50,10 @@ COLUNAS_CSV = [
 ]
 
 
-def carregar_perguntas() -> list[dict[str, Any]]:
+def carregar_perguntas(arquivo_perguntas: Path = ARQUIVO_PERGUNTAS) -> list[dict[str, Any]]:
     perguntas: list[dict[str, Any]] = []
 
-    with ARQUIVO_PERGUNTAS.open(encoding="utf-8") as arquivo:
+    with arquivo_perguntas.open(encoding="utf-8") as arquivo:
         for numero, linha in enumerate(arquivo, start=1):
             if not linha.strip():
                 continue
@@ -62,8 +63,11 @@ def carregar_perguntas() -> list[dict[str, Any]]:
                 raise ValueError(f"JSON inválido na linha {numero}: {erro}") from erro
             perguntas.append(pergunta)
 
-    if len(perguntas) != 50:
-        raise ValueError(f"Esperadas 50 perguntas, mas foram encontradas {len(perguntas)}.")
+    esperadas = 50 if arquivo_perguntas == ARQUIVO_PERGUNTAS else 10
+    if len(perguntas) != esperadas:
+        raise ValueError(
+            f"Esperadas {esperadas} perguntas, mas foram encontradas {len(perguntas)}."
+        )
 
     ids = [p["id"] for p in perguntas]
     if len(set(ids)) != len(ids):
@@ -451,9 +455,17 @@ def main() -> None:
         default=None,
         help="Recalcula um CSV anterior sem chamar o modelo nem o banco.",
     )
+    parser.add_argument(
+        "--conjunto",
+        choices=["teste", "dev"],
+        default="teste",
+        help="teste: Q001-Q050 (só para medir); dev: D01-D10 (para ajustar o prompt).",
+    )
     args = parser.parse_args()
 
-    perguntas = carregar_perguntas()
+    perguntas = carregar_perguntas(
+        ARQUIVO_PERGUNTAS_DEV if args.conjunto == "dev" else ARQUIVO_PERGUNTAS
+    )
 
     if args.reavaliar_csv is not None:
         caminho = args.reavaliar_csv
@@ -484,8 +496,9 @@ def main() -> None:
 
     PASTA_RESULTADOS.mkdir(parents=True, exist_ok=True)
     identificador = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
-    caminho_csv = PASTA_RESULTADOS / f"resultados_{identificador}.csv"
-    caminho_json = PASTA_RESULTADOS / f"resumo_{identificador}.json"
+    prefixo = "" if args.conjunto == "teste" else "dev_"
+    caminho_csv = PASTA_RESULTADOS / f"{prefixo}resultados_{identificador}.csv"
+    caminho_json = PASTA_RESULTADOS / f"{prefixo}resumo_{identificador}.json"
 
     print(f"Modelo: {config.ollama_modelo}")
     print(f"Perguntas no arquivo: {len(perguntas)}")
@@ -533,6 +546,7 @@ def main() -> None:
     resumo = {
         "data_utc": datetime.now(UTC).isoformat(),
         "modelo": config.ollama_modelo,
+        "conjunto": args.conjunto,
         "quantidade_perguntas_arquivo": len(perguntas),
         "quantidade_perguntas_executadas": len(perguntas_execucao),
         "execucao_completa": len(perguntas_execucao) == len(perguntas),
