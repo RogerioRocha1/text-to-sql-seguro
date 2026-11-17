@@ -9,8 +9,12 @@ Etapa 1, ``validar`` (sem banco; todas as regras precisam passar):
 4. Só tabelas da lista permitida (ou nomes definidos em WITH), no schema
    ``public``. Isso bloqueia pg_catalog, information_schema e funções no FROM.
 5. Nenhuma função que leia arquivos, execute SQL em texto, altere estado
-   (sequências, configurações) ou exponha dados do servidor.
-6. LIMIT obrigatório: se faltar, é adicionado; se passar do máximo, é reduzido.
+   (sequências, configurações) ou exponha dados do servidor ou da sessão,
+   nem conversão para os tipos reg* (regclass, regrole...), que consultam o
+   catálogo do sistema.
+6. Funções de texto que alocam memória (repeat, lpad, rpad) só com tamanho
+   numérico fixo e pequeno.
+7. LIMIT obrigatório: se faltar, é adicionado; se passar do máximo, é reduzido.
 
 Etapa 2, ``verificar_custo`` (com banco): roda EXPLAIN, sem executar a
 consulta, e recusa se o custo estimado pelo planejador passar do máximo.
@@ -88,6 +92,10 @@ _FUNCOES_PROIBIDAS = {
     "current_database",
     "current_schema",
     "current_schemas",
+    "current_query",
+    "current_role",
+    "current_catalog",
+    "user",
     # arquivos e ambiente (outros dialetos)
     "glob",
     "getenv",
@@ -105,7 +113,16 @@ _PREFIXOS_PROIBIDOS = (
     "inet_",
     "binary_upgrade_",
     "read_",
+    "txid_",  # txid_current cria um identificador de transação
+    "has_",  # has_table_privilege e afins sondam as permissões do usuário
 )
+
+# Palavras-chave que o PostgreSQL aceita sem parênteses (SELECT user) e que o
+# SQLGlot lê como coluna. Nenhuma tabela consultável tem colunas com esses nomes.
+_PALAVRAS_DE_SESSAO = {"user", "current_role", "current_catalog", "current_user", "session_user"}
+
+# Tamanho máximo aceito em repeat/lpad/rpad (evita alocar gigabytes de memória).
+TAMANHO_MAXIMO_TEXTO = 10_000
 
 _SCHEMAS_PERMITIDOS = {"", "public"}
 
@@ -215,6 +232,30 @@ def validar(
         nome = _nome_funcao(funcao)
         if _funcao_proibida(nome):
             return _reprovar(f"A função '{nome}' não é permitida.")
+
+    for coluna in raiz.find_all(exp.Column):
+        if (
+            not coluna.table
+            and not coluna.this.args.get("quoted")
+            and coluna.name.lower() in _PALAVRAS_DE_SESSAO
+        ):
+            return _reprovar(f"'{coluna.name}' expõe dados da sessão e não é permitido.")
+
+    for conversao in raiz.find_all(exp.Cast):
+        if isinstance(conversao.to, exp.ObjectIdentifier):
+            return _reprovar("Conversão para tipos do catálogo (reg*) não é permitida.")
+
+    for funcao in raiz.find_all(exp.Repeat, exp.Pad):
+        tamanho = funcao.args.get("times") or funcao.args.get("expression")
+        if not (
+            isinstance(tamanho, exp.Literal)
+            and tamanho.is_int
+            and int(tamanho.this) <= TAMANHO_MAXIMO_TEXTO
+        ):
+            return _reprovar(
+                f"repeat, lpad e rpad aceitam no máximo {TAMANHO_MAXIMO_TEXTO} caracteres, "
+                "informados como número fixo."
+            )
 
     limite = raiz.args.get("limit")
     if isinstance(limite, exp.Fetch):

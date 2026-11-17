@@ -58,7 +58,7 @@ A acurácia é calculada como o número de resultados que correspondem à refer�
 
 Das 43 consultas executadas, 31 produziram o resultado esperado e 12 produziram resultado diferente. Assim, a taxa de acerto entre as consultas que chegaram a ser executadas foi de 31/43, aproximadamente **72,09%**.
 
-O baseline teve 50 consultas bloqueadas e nenhum acerto (0/50). A análise detalhada dos SQLs do baseline ainda não foi concluída para as 50 perguntas; os exemplos apresentados adiante são amostras dos primeiros registros inspecionados.
+O baseline teve 50 consultas bloqueadas e nenhum acerto (0/50). A inspeção individual dos 50 SQLs do baseline está na seção 6.
 
 ### 3.3 Tempos médios de geração
 
@@ -245,9 +245,22 @@ Os 19 casos que permaneceram incorretos após a reavaliação estão distribuíd
 
 ## 6. Resultado do baseline
 
-O baseline obteve 0 acertos em 50 perguntas e todas as 50 consultas foram classificadas como bloqueadas. Nos primeiros cinco exemplos inspecionados, o modelo gerou referências a campos e relacionamentos inexistentes, como `id_orcamento`, `id_emenda`, `data_execucao`, `orgao_id`, além de utilizar `YEAR()` e tabelas/colunas que não correspondem ao esquema do projeto.
+O baseline obteve 0 acertos em 50 perguntas e todas as 50 consultas foram classificadas como bloqueadas. Os 50 SQLs do CSV reavaliado foram inspecionados individualmente (17/11/2026). **Nenhum bloqueio foi causado por uma regra de segurança**: em todos os casos, o modelo inventou tabelas ou colunas que não existem no banco.
 
-Esses exemplos são compatíveis com a hipótese de que o esquema dinâmico ajuda o modelo a produzir SQL alinhado à estrutura real da base. Entretanto, como a inspeção detalhada apresentada aqui cobre apenas os primeiros exemplos do baseline, não se atribui uma causa individual a cada um dos 50 bloqueios sem analisar os demais registros do CSV.
+| Onde parou | Casos | Causa | Itens inventados pelo modelo |
+|---|---:|---|---|
+| Validador (tabela fora da lista) | 11 | tabela inexistente | `mes` (3), `categoria_economica` (3), `municipio` (2), `programa`, `categoria`, `uf` |
+| Banco, no `EXPLAIN` (antes de executar) | 39 | coluna inexistente | `execucao_mensal.id_orcamento` (26), `execucao_mensal.orgao_id` (6), `orcamento.orgao_id` (2), `execucao_mensal.data_execucao` (2), colunas `id_subfuncao` (3) |
+
+Perguntas paradas no validador: Q012, Q013, Q016, Q022, Q030, Q036, Q038, Q039, Q040, Q046 e Q047. As tabelas que o validador recusou também não existem no banco; sem o validador, essas 11 consultas falhariam no banco com `relation does not exist`.
+
+Padrões que se repetem nos SQLs do baseline:
+
+- 31 dos 50 SQLs usam uma chave `id_orcamento` que não existe, e 23 fazem `JOIN orcamento` para ligar a execução ao orçamento, um relacionamento que o banco não tem;
+- 28 usam `YEAR(...)`, função do MySQL que não existe no PostgreSQL, sobre uma coluna de data também inventada (`data_execucao`), em vez da coluna `ano`;
+- nomes de chaves no padrão `<tabela>_id` ou `id_<tabela>`, típicos de esquemas genéricos, no lugar dos códigos reais (`codigo_orgao`, `codigo_funcao`...).
+
+Conclusão: sem o esquema dinâmico, o modelo não tem como saber os nomes reais das tabelas e colunas, e escreve um esquema "provável" que não corresponde à base. O resultado de 0/50 mede essa dependência do esquema, não a qualidade do SQL em si. O baseline de segurança (mesmo SQL com e sem validador) está em [`README.md`](README.md#catálogo-de-ataques).
 
 ## 7. Síntese das causas observadas
 
@@ -282,7 +295,7 @@ As ações abaixo são recomendações para trabalho futuro, não resultados já
 5. Tornar mais explícito no prompt quais colunas pertencem a cada tabela e que `unidade_gestora` não é uma tabela consultável independente.
 6. Acrescentar testes de regressão para os 19 casos de falha identificados, mantendo os SQLs de referência como oráculo.
 7. Realizar uma nova rodada após as alterações, identificando os novos arquivos e preservando a rodada original para comparação.
-8. Completar a inspeção individual dos 50 SQLs do baseline antes de descrever as causas específicas de todos os bloqueios.
+8. ~~Completar a inspeção individual dos 50 SQLs do baseline~~ (feito em 17/11/2026, seção 6).
 
 ## 10. Arquivos e comandos de reprodução
 
