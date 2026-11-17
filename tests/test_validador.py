@@ -1,4 +1,5 @@
-"""Testes do validador. Cada ataque do catálogo deve virar um caso aqui."""
+"""Testes do validador. O catálogo completo de ataques está em eval/ataques.jsonl
+(testado em test_ataques.py)."""
 
 import psycopg
 import pytest
@@ -45,6 +46,12 @@ def aprova(sql: str, limite: int = 1000):
         "WITH RECURSIVE n(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM n WHERE i < 5) "
         "SELECT * FROM n",
         "SELECT * FROM (WITH t AS (SELECT nome FROM funcao) SELECT * FROM t) s",
+        # funções de texto com tamanho pequeno e conversões comuns
+        "SELECT lpad(codigo, 5, '0'), rpad(nome, 20) FROM orgao",
+        "SELECT repeat('-', 10)",
+        "SELECT valor_pago::numeric(15, 2), mes::text FROM execucao_mensal",
+        # "user" entre aspas ou com tabela é coluna, não a palavra-chave da sessão
+        'SELECT o.nome AS "user" FROM orgao o',
     ],
 )
 def test_aprova_consultas_de_leitura(sql):
