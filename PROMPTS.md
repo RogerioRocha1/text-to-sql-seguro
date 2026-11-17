@@ -2,7 +2,7 @@
 
 Regras da disciplina: pelo menos 10 interações relevantes até a entrega final. Cada registro traz o prompt, um resumo da resposta e a decisão do grupo (aceito, corrigido ou descartado), com o motivo. Código gerado por IA só entra na `main` com teste passando na CI e revisão de outro integrante.
 
-**Ferramentas usadas:** Claude (chat), Claude Code (extensão do VS Code), ChatGPT (GPT-6). _(acrescentar outras que o grupo usar)_
+**Ferramentas usadas:** Claude (chat), Claude Code (extensão do VS Code), ChatGPT (GPT-6), Claude (Cowork, agente com acesso ao navegador). _(acrescentar outras que o grupo usar)_
 
 ---
 
@@ -283,6 +283,54 @@ Regras da disciplina: pelo menos 10 interações relevantes até a entrega final
 - **Resposta (resumo):** A IA classificou os 19 resultados incorretos em três grupos principais: consultas executadas com resultado diferente do esperado, consultas bloqueadas pelo validador ou pelo banco e consultas interrompidas por timeout. Foram identificados problemas de interpretação da pergunta, agregações incorretas, joins inadequados, referências a colunas inexistentes e uso incorreto de aliases. Foi produzido `eval/analise_erros.md` com os resultados, exemplos e causas observadas.
 - **Decisão:** aceito como diagnóstico da primeira rodada, com necessidade de revisão técnica pelo grupo.
 - **Motivo e revisão:** A análise preserva os erros reais e distingue consultas executadas incorretamente de consultas bloqueadas ou interrompidas. O grupo decidiu não corrigir manualmente as respostas e não ajustar o prompt antes de documentar os resultados. As causas classificadas a partir dos SQLs e mensagens de erro devem ser tratadas como diagnóstico dos casos observados, não como prova de causa raiz para todos os problemas. O documento foi salvo em `eval/analise_erros.md`.
+
+---
+
+## 019 · Levantamento do que faltava para fechar o Marco 3
+
+- **Data:** 17/11/2026
+- **Integrante:** Rogério Rocha
+- **Ferramenta:** Claude (Cowork)
+- **Prompt (resumo):** "Com isso o Marco 3 está concluído?", depois de registrar no README a contribuição da Thamiris.
+- **Resposta (resumo):** A IA comparou o repositório com a definição do Marco 3 no README. Faltavam: integrar a branch `feat/marco3-perguntas-referencia` à `main`, o catálogo de ataques, a análise completa do baseline e uma partição formal entre desenvolvimento e teste (limitação apontada pela própria Thamiris em `eval/README.md`).
+- **Decisão:** aceito.
+- **Motivo e revisão:** O grupo conferiu a lista com o checklist do README e com as limitações registradas em `eval/README.md`.
+
+---
+
+## 020 · Catálogo de ataques e avaliação das defesas (Marco 3)
+
+- **Data:** 17/11/2026
+- **Integrante:** Rogério Rocha
+- **Ferramenta:** Claude (Cowork)
+- **Prompt (resumo):** "Pode dar continuidade e finalizar o Marco 3."
+- **Resposta (resumo):** A IA montou `eval/ataques.jsonl`, com 72 ataques em SQL e 25 em linguagem natural, o script `eval/avaliar_ataques.py` e os testes `tests/test_ataques.py`. O script compara o fluxo protegido com um baseline sem validador, usando o mesmo SQL nas duas condições. A IA rodou tudo com `qwen2.5-coder:3b` e o banco de 2025.
+- **Decisão:** aceito, com correção no validador (registro 021).
+- **Motivo e revisão:** A primeira rodada mostrou 8 ataques em SQL executados no fluxo protegido. Sem validador, 29 ataques em SQL e 4 em linguagem natural funcionaram. A triagem automática do campo `indevido` errou em dois casos (P023 e P025), por isso a tabela final de `eval/README.md` usa a revisão manual. O modelo obedeceu a quase todos os pedidos maliciosos, então o prompt não conta como barreira.
+
+---
+
+## 021 · Correção de 9 brechas do validador encontradas pelo catálogo
+
+- **Data:** 17/11/2026
+- **Integrante:** Rogério Rocha
+- **Ferramenta:** Claude (Cowork)
+- **Prompt (resumo):** Mesma sessão do registro 020: corrigir o que o catálogo encontrou.
+- **Resposta (resumo):** A IA bloqueou `SELECT user`/`CURRENT_ROLE` (o SQLGlot lê como coluna), `current_query`, `txid_*`, `has_*`, conversões para tipos `reg*` e `repeat`/`lpad`/`rpad` acima de 10.000 caracteres. Também acrescentou consultas legítimas aos testes, como `lpad(codigo, 5, '0')`, `::numeric` e `"user"` entre aspas.
+- **Decisão:** aceito, pendente de revisão de outro integrante no PR.
+- **Motivo e revisão:** Depois da correção, os 72 ataques em SQL param na barreira esperada. Os 43 SQLs executados no benchmark de 07/11 e as 50 referências continuam aprovados, então não há regressão. A recursão sem fim (S069) continua passando pelo validador e pelo custo; fica a cargo do `statement_timeout` do banco, e isso está documentado. Pela regra do grupo, o código só entra na `main` com a CI verde e revisão de outro integrante.
+
+---
+
+## 022 · Análise do baseline e partição entre desenvolvimento e teste
+
+- **Data:** 17/11/2026
+- **Integrante:** Rogério Rocha
+- **Ferramenta:** Claude (Cowork)
+- **Prompt (resumo):** Mesma sessão: completar a análise do baseline sem esquema e separar desenvolvimento de teste.
+- **Resposta (resumo):** A IA inspecionou os 50 SQLs do baseline. Em todos, o modelo inventou o esquema: 11 tabelas, paradas no validador, e 39 colunas, paradas no `EXPLAIN`; nenhum bloqueio veio de regra de segurança. A IA também criou `eval/perguntas_dev.jsonl` (D01–D10), com referências conferidas no banco, e a opção `--conjunto dev` em `eval/avaliar.py`.
+- **Decisão:** aceito.
+- **Motivo e revisão:** O histórico do Git mostra que o prompt não mudou depois de 02/11 e que o conjunto de teste é de 07/11, então os 62% continuam valendo como resultado de teste. O conjunto de desenvolvimento cobre a busca de órgão por nome e por sigla, que o teste não cobre. Na rodada de desenvolvimento, o assistente acertou 4/10 e o baseline 0/10. Os erros estão em órgãos vinculados buscados por nome ou sigla, o mesmo ponto fraco do caso 3 de `casos-de-falha.md`.
 
 ---
 

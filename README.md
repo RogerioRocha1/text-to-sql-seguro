@@ -15,7 +15,7 @@ Os dados de despesas federais são abertos, mas consultá-los exige saber SQL ou
 - **Dados:** CSV de Orçamento da Despesa (anual) e Execução da Despesa (12 arquivos mensais) do Portal da Transparência, ano 2025, carregados no PostgreSQL pelo serviço `carga`. Sem dados de pessoas físicas: o nome do autor de emenda parlamentar é descartado e vira só a coluna `com_emenda`.
 - **Esquema consultável:** `orgao`, `funcao`, `subfuncao`, `programa_acao`, `orcamento` e `execucao_mensal`, com comentários em tabelas e colunas que alimentam o prompt do modelo. Definido em [`esquema.py`](src/assistente_sql/esquema.py).
 - **Modelo:** modelo aberto de código rodando no Ollama. Custo zero, sem chaves de API.
-- **Validador:** aceita um único `SELECT` no dialeto do PostgreSQL; bloqueia escrita (inclusive escondida em `WITH`, `SELECT INTO` e `FOR UPDATE`), comandos administrativos, funções perigosas (`pg_sleep`, `pg_read_file`, `set_config`, `query_to_xml`, `dblink`...), schemas fora de `public` e tabelas fora da lista; aplica `LIMIT`; e recusa consultas com custo estimado pelo `EXPLAIN` acima de 1.000.000 ([calibração](eval/README.md)).
+- **Validador:** aceita um único `SELECT` no dialeto do PostgreSQL; bloqueia escrita (inclusive escondida em `WITH`, `SELECT INTO` e `FOR UPDATE`), comandos administrativos, funções perigosas (`pg_sleep`, `pg_read_file`, `set_config`, `query_to_xml`, `dblink`...), dados da sessão (`user`, `current_query`), conversões `reg*` e `repeat`/`lpad` gigantes, schemas fora de `public` e tabelas fora da lista; aplica `LIMIT`; e recusa consultas com custo estimado pelo `EXPLAIN` acima de 1.000.000 ([calibração](eval/README.md)).
 - **Defesa em camadas:** mesmo que o validador falhe, a aplicação consulta com o usuário `leitor`, que só tem `SELECT` no schema `public`, transações somente leitura e limite de 15 s por consulta ([`01-leitor.sh`](docker/postgres/01-leitor.sh)).
 
 ## Como rodar
@@ -227,7 +227,7 @@ Variáveis de ambiente: veja `.env.example`. Nenhuma chave de API é necessária
 ```text
 src/assistente_sql/   código da aplicação: carga, validador, gerador (Ollama), fluxo ponta a ponta e interface (app.py)
 tests/                testes automatizados
-eval/                 perguntas de referência, catálogo de ataques e scripts de avaliação
+eval/                 perguntas de teste e de desenvolvimento, catálogo de ataques, scripts e resultados da avaliação
 evidencias/           vídeo, logs, prints e índice das evidências
 docs/                 documentação técnica e trabalho de pesquisa em PDF
 docker/postgres/      script de inicialização do banco (usuário somente leitura)
@@ -238,7 +238,7 @@ data/raw/             ZIPs baixados do Portal da Transparência (fora do Git)
 
 - [x] Marco 1 · proposta técnica, repositório e CI rodando testes
 - [x] Marco 2 · carga dos dados, fluxo ponta a ponta no Streamlit, Docker Compose
-- [ ] Marco 3 · MVP completo, 50 perguntas de referência, catálogo de ataques, baselines
+- [x] Marco 3 · MVP completo, 50 perguntas de referência, catálogo de ataques, baselines ([resultados](eval/README.md))
 - [ ] Marco 4 · avaliação concluída, documentação técnica e evidências
 
 ## Integrantes e contribuição
@@ -247,7 +247,7 @@ data/raw/             ZIPs baixados do Portal da Transparência (fora do Git)
 | --- | --- | --- |
 | _(Rodrigo e Thallia)_ | Dados e Qualidade | Marco 2: Thallia Silva de Oliveira: download e análise dos dados de 2025 do Portal da Transparência, conferência da carga no banco local, documentação da decisão sobre órgãos sem código (`docs/decisoes-de-dados.md`) e registro de uso de IA (`PROMPTS.md`). Rodrigo: estrutura docker, git Windows e preparo do Marco 2 |
 | _(Rogério Rocha)_ | Backend e Infraestrutura | Marco 1: Proposta técnica, repositório, integração e revisão contínua. Marco 2: revisão do PR #2 e correções no validador (brecha de CTE) e na tabela de resultados |
-| _(nome)_ | IA e Avaliação | |
+| _(Thamiris de Oliveira e Silva)_ | IA e Avaliação | Marco 3 (branch `feat/marco3-perguntas-referencia`): conjunto de 50 perguntas de referência com SQL e resultado esperado conferidos no banco (`eval/perguntas.jsonl`); avaliador automático `eval/avaliar.py`, que compara o assistente completo com um baseline sem esquema dinâmico e gera métricas em CSV/JSON; critério de comparação (valores em centavos, ordem exigida só em rankings) e reavaliação de resultados históricos; primeira rodada completa (31/50 acertos, 62%, contra 0/50 do baseline); análise dos 19 erros (`eval/analise_erros.md`) e registros 013 a 018 no `PROMPTS.md` |
 | _(nome)_ | Produto e Interface | |
 
 **Contas no GitHub:** Rodrigo Santos faz commits como `rodrigo-santos-2411288` (`2411288@escolas.anchieta.br`). O commit `b3fac88` (carga dos dados do Marco 2) saiu pela conta pessoal `RodrigoRibeiroSantos`, que também é dele.
