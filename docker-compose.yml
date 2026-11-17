@@ -74,6 +74,8 @@ services:
       CUSTO_MAXIMO: ${CUSTO_MAXIMO:-1000000}
     ports:
       - "127.0.0.1:${APP_PORTA:-8501}:8501"
+    volumes:
+      - ./eval:/app/eval
     depends_on:
       carga:
         condition: service_completed_successfully

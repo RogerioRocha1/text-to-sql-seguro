@@ -1,0 +1,777 @@
+modo,id,categoria,dificuldade,pergunta,situacao,acertou,sql_referencia,sql_gerado,sql_executado,resultado_esperado,resultado_obtido,motivo,custo_estimado,tempo_modelo_s,tempo_custo_s,tempo_execucao_s,tokens_entrada,tokens_saida
+completo,Q001,classificacao_despesa,facil,Qual foi o total pago em despesas correntes em 2025?,ok,True,SELECT SUM(valor_pago) AS total_pago FROM execucao_mensal WHERE ano = 2025 AND categoria_economica = 'DESPESAS CORRENTES';,"SELECT SUM(execucao_mensal.valor_pago) AS total_pago
+FROM execucao_mensal
+WHERE ano = 2025 AND categoria_economica = 'DESPESAS CORRENTES';",SELECT SUM(execucao_mensal.valor_pago) AS total_pago FROM execucao_mensal WHERE ano = 2025 AND categoria_economica = 'DESPESAS CORRENTES' LIMIT 1000,"[[""2889033396205.65""]]","[[""2889033396205.65""]]",,30871.1,113.22894380400066,0.04459254700122983,1.4408560810006747,1634,52
+completo,Q002,emendas,facil,Qual foi o total pago em despesas com emendas parlamentares em 2025?,ok,True,SELECT SUM(valor_pago) AS total_pago FROM execucao_mensal WHERE ano = 2025 AND com_emenda IS TRUE;,"SELECT SUM(execucao_mensal.valor_pago) AS total_pago_emendas
+FROM execucao_mensal
+WHERE ano = 2025 AND com_emenda = TRUE;",SELECT SUM(execucao_mensal.valor_pago) AS total_pago_emendas FROM execucao_mensal WHERE ano = 2025 AND com_emenda = TRUE LIMIT 1000,"[[""31539496508.06""]]","[[""31539496508.06""]]",,29387.86,9.465286128001026,0.0056597659986437066,0.11188630600008764,1637,45
+completo,Q003,classificacao_despesa,intermediaria,Qual grupo de despesa teve o maior valor pago em 2025?,ok,True,"SELECT grupo_despesa, SUM(valor_pago) AS total_pago FROM execucao_mensal WHERE ano = 2025 GROUP BY grupo_despesa ORDER BY total_pago DESC, grupo_despesa ASC LIMIT 1;","SELECT grupo_despesa, SUM(execucao_mensal.valor_pago) AS total_pago
+FROM execucao_mensal
+WHERE ano = 2025
+GROUP BY grupo_despesa
+ORDER BY total_pago DESC
+LIMIT 1;","SELECT grupo_despesa, SUM(execucao_mensal.valor_pago) AS total_pago FROM execucao_mensal WHERE ano = 2025 GROUP BY grupo_despesa ORDER BY total_pago DESC LIMIT 1","[[""Outras Despesas Correntes"", ""2205623906149.45""]]","[[""Outras Despesas Correntes"", ""2205623906149.45""]]",,30975.58,10.788923543001147,0.006528664998768363,0.19895798200013814,1634,59
+completo,Q004,classificacao_despesa,intermediaria,Qual modalidade de despesa recebeu o maior valor pago em 2025?,ok,True,"SELECT modalidade_despesa, SUM(valor_pago) AS total_pago FROM execucao_mensal WHERE ano = 2025 GROUP BY modalidade_despesa ORDER BY total_pago DESC NULLS LAST, modalidade_despesa ASC LIMIT 1;","SELECT modalidade_despesa, SUM(valor_pago) AS total_pago
+FROM execucao_mensal
+WHERE ano = 2025
+GROUP BY modalidade_despesa
+ORDER BY total_pago DESC
+LIMIT 1;","SELECT modalidade_despesa, SUM(valor_pago) AS total_pago FROM execucao_mensal WHERE ano = 2025 GROUP BY modalidade_despesa ORDER BY total_pago DESC LIMIT 1","[[""Aplicações Diretas"", ""4061337456346.12""]]","[[""Aplicações Diretas"", ""4061337456346.12""]]",,30977.69,10.028681271998721,0.0020754179986397503,0.21857623500000045,1635,55
+completo,Q005,restos_a_pagar,intermediaria,Em qual mês ocorreu o maior valor de restos a pagar pagos em 2025?,ok,True,"SELECT mes, SUM(valor_restos_a_pagar_pagos) AS total_restos_pagos FROM execucao_mensal WHERE ano = 2025 GROUP BY mes ORDER BY total_restos_pagos DESC, mes ASC LIMIT 1;","SELECT mes, SUM(valor_restos_a_pagar_pagos) AS total_restos_a_pagar_pagos
+FROM execucao_mensal
+WHERE ano = 2025
+GROUP BY mes
+ORDER BY total_restos_a_pagar_pagos DESC
+LIMIT 1;","SELECT mes, SUM(valor_restos_a_pagar_pagos) AS total_restos_a_pagar_pagos FROM execucao_mensal WHERE ano = 2025 GROUP BY mes ORDER BY total_restos_a_pagar_pagos DESC LIMIT 1","[[""1"", ""134828868899.79""]]","[[1, ""134828868899.79""]]",,30977.39,11.706762412999524,0.002193649001128506,0.1679025540015573,1638,65
+completo,Q006,orcamento,intermediaria,Qual órgão superior teve o maior orçamento atualizado em 2025?,ok,True,"SELECT COALESCE(o.nome_orgao_superior, 'Sem informação') AS orgao_superior, SUM(r.valor_atualizado) AS total_orcamento_atualizado FROM orcamento r LEFT JOIN orgao o ON o.codigo = r.codigo_orgao WHERE r.ano = 2025 GROUP BY 1 ORDER BY total_orcamento_atualizado DESC, orgao_superior ASC LIMIT 1;","SELECT o.nome_orgao_superior, SUM(oa.valor_atualizado) AS total_orcamento_atualizado
+FROM orgao o
+JOIN orcamento oa ON o.codigo = oa.codigo_orgao
+WHERE oa.ano = 2025
+GROUP BY o.nome_orgao_superior
+ORDER BY total_orcamento_atualizado DESC
+LIMIT 1;","SELECT o.nome_orgao_superior, SUM(oa.valor_atualizado) AS total_orcamento_atualizado FROM orgao AS o JOIN orcamento AS oa ON o.codigo = oa.codigo_orgao WHERE oa.ano = 2025 GROUP BY o.nome_orgao_superior ORDER BY total_orcamento_atualizado DESC LIMIT 1","[[""Ministério da Fazenda"", ""3207213568813.00""]]","[[""Ministério da Fazenda"", ""3207213568813.00""]]",,1203.24,14.464014748999034,0.01425995600038732,0.10060018699914508,1634,80
+completo,Q007,orcamento,intermediaria,Qual foi a diferença total entre o orçamento atualizado e o orçamento inicial em 2025?,ok,True,SELECT SUM(valor_atualizado - valor_inicial) AS diferenca_orcamentaria FROM orcamento WHERE ano = 2025;,"SELECT SUM(valor_atualizado - valor_inicial) AS diferenca_total
+FROM orcamento
+WHERE ano = 2025;",SELECT SUM(valor_atualizado - valor_inicial) AS diferenca_total FROM orcamento WHERE ano = 2025 LIMIT 1000,"[[""114858147731.00""]]","[[""114858147731.00""]]",,1121.81,7.526758318999782,0.0014283150012488477,0.017105269000239787,1640,33
+completo,Q008,orcamento,intermediaria,Qual foi o percentual do orçamento atualizado que foi realizado em 2025?,ok,True,"SELECT ROUND(100.0 * SUM(valor_realizado) / NULLIF(SUM(valor_atualizado), 0), 2) AS percentual_realizado FROM orcamento WHERE ano = 2025;","SELECT
+  (SUM(o.valor_realizado) / SUM(o.valor_atualizado)) * 100 AS percentual_realizado
+FROM
+  orcamento o
+WHERE
+  o.ano = 2025;",SELECT (SUM(o.valor_realizado) / SUM(o.valor_atualizado)) * 100 AS percentual_realizado FROM orcamento AS o WHERE o.ano = 2025 LIMIT 1000,"[[""84.84""]]","[[""84.84203539684754039300""]]",,1121.82,10.316406984000423,0.01026087600075698,0.015434757999173598,1636,53
+completo,Q009,orcamento,intermediaria,Qual função apresentou o maior valor realizado no orçamento em 2025?,ok,True,"SELECT f.nome, SUM(r.valor_realizado) AS total_realizado FROM orcamento r JOIN funcao f ON f.codigo = r.codigo_funcao WHERE r.ano = 2025 GROUP BY f.nome ORDER BY total_realizado DESC, f.nome ASC LIMIT 1;","SELECT f.nome, SUM(o.valor_realizado) AS total_realizado
+FROM funcao f
+JOIN orcamento o ON f.codigo = o.codigo_funcao
+WHERE o.ano = 2025
+GROUP BY f.nome
+ORDER BY total_realizado DESC
+LIMIT 1;","SELECT f.nome, SUM(o.valor_realizado) AS total_realizado FROM funcao AS f JOIN orcamento AS o ON f.codigo = o.codigo_funcao WHERE o.ano = 2025 GROUP BY f.nome ORDER BY total_realizado DESC LIMIT 1","[[""Encargos especiais"", ""2828272889584.67""]]","[[""Encargos especiais"", ""2828272889584.67""]]",,1202.67,12.715719681998962,0.003218677999029751,0.021180403000471415,1634,65
+completo,Q010,orcamento,intermediaria,Qual subfunção apresentou o maior valor realizado no orçamento em 2025?,ok,True,"SELECT s.nome, SUM(r.valor_realizado) AS total_realizado FROM orcamento r JOIN subfuncao s ON s.codigo = r.codigo_subfuncao WHERE r.ano = 2025 GROUP BY s.nome ORDER BY total_realizado DESC, s.nome ASC LIMIT 1;","SELECT subfuncao.nome, SUM(orcamento.valor_realizado) AS total_realizado
+FROM orcamento
+JOIN subfuncao ON orcamento.codigo_subfuncao = subfuncao.codigo
+WHERE orcamento.ano = 2025
+GROUP BY subfuncao.nome
+ORDER BY total_realizado DESC
+LIMIT 1;","SELECT subfuncao.nome, SUM(orcamento.valor_realizado) AS total_realizado FROM orcamento JOIN subfuncao ON orcamento.codigo_subfuncao = subfuncao.codigo WHERE orcamento.ano = 2025 GROUP BY subfuncao.nome ORDER BY total_realizado DESC LIMIT 1","[[""Refinanciamento da dívida interna"", ""1356200755156.51""]]","[[""Refinanciamento da dívida interna"", ""1356200755156.51""]]",,1198.4,13.68308398299996,0.004845293000471429,0.023154220998549135,1636,75
+completo,Q011,restos_a_pagar,facil,Qual foi o total de restos a pagar cancelados em 2025?,ok,True,SELECT SUM(valor_restos_a_pagar_cancelados) AS total_restos_cancelados FROM execucao_mensal WHERE ano = 2025;,"SELECT SUM(valor_restos_a_pagar_cancelados) AS total_restos_cancelados
+FROM execucao_mensal
+WHERE ano = 2025;",SELECT SUM(valor_restos_a_pagar_cancelados) AS total_restos_cancelados FROM execucao_mensal WHERE ano = 2025 LIMIT 1000,"[[""13061778844.56""]]","[[""13061778844.56""]]",,30150.07,7.485357482999461,0.001664100000198232,0.2427056470005482,1633,40
+completo,Q012,localizacao,intermediaria,Qual município e UF apresentaram o maior valor pago em 2025?,ok,False,"SELECT COALESCE(uf, 'Sem UF') AS uf, municipio, SUM(valor_pago) AS total_pago FROM execucao_mensal WHERE ano = 2025 AND municipio IS NOT NULL AND BTRIM(municipio) <> '' GROUP BY COALESCE(uf, 'Sem UF'), municipio ORDER BY total_pago DESC, uf ASC, municipio ASC LIMIT 1;","SELECT
+    e.municipio,
+    e.uf,
+    SUM(e.valor_pago) AS total_pago
+FROM
+    execucao_mensal e
+WHERE
+    e.ano = 2025
+GROUP BY
+    e.municipio, e.uf
+ORDER BY
+    total_pago DESC
+LIMIT 1;","SELECT e.municipio, e.uf, SUM(e.valor_pago) AS total_pago FROM execucao_mensal AS e WHERE e.ano = 2025 GROUP BY e.municipio, e.uf ORDER BY total_pago DESC LIMIT 1","[[""RS"", ""PORTO ALEGRE"", ""2554377366.33""]]","[[null, null, ""4582732927535.67""]]",,32709.03,14.168030929000452,0.0032603139989078045,0.18419437299962738,1632,75
+completo,Q013,localizacao,intermediaria,"Quantos municípios distintos, considerando suas respectivas UFs, tiveram pagamentos positivos em 2025?",ok,False,"SELECT COUNT(DISTINCT (uf, municipio)) AS total_municipios FROM execucao_mensal WHERE ano = 2025 AND uf IS NOT NULL AND municipio IS NOT NULL AND BTRIM(municipio) <> '' AND valor_pago > 0;","SELECT COUNT(DISTINCT municipio) AS num_municipios
+FROM execucao_mensal
+WHERE ano = 2025 AND valor_pago > 0;",SELECT COUNT(DISTINCT municipio) AS num_municipios FROM execucao_mensal WHERE ano = 2025 AND valor_pago > 0 LIMIT 1000,"[[""282""]]",[[280]],,90422.33,9.020001553999464,0.0030247300001065014,0.3349413240011927,1645,42
+completo,Q014,localizacao,intermediaria,Qual percentual do valor pago em 2025 está associado a registros sem UF informada?,ok,True,"SELECT ROUND(100.0 * SUM(valor_pago) FILTER (WHERE uf IS NULL) / NULLIF(SUM(valor_pago), 0), 2) AS percentual_sem_uf FROM execucao_mensal WHERE ano = 2025;","SELECT
+  (SUM(CASE WHEN e.uf IS NULL THEN e.valor_pago ELSE 0 END) * 100.0 / SUM(e.valor_pago)) AS percentual_sem_uf
+FROM
+  execucao_mensal e
+WHERE
+  e.ano = 2025;",SELECT (SUM(CASE WHEN e.uf IS NULL THEN e.valor_pago ELSE 0 END) * 100.0 / SUM(e.valor_pago)) AS percentual_sem_uf FROM execucao_mensal AS e WHERE e.ano = 2025 LIMIT 1000,"[[""94.13""]]","[[""94.1348570058016353""]]",,30974.06,15.08468141999947,0.002253761000247323,0.1814586419986881,1637,70
+completo,Q015,execucao_financeira,facil,Qual foi o valor total liquidado em 2025?,ok,True,SELECT SUM(valor_liquidado) AS total_liquidado FROM execucao_mensal WHERE ano = 2025;,"SELECT SUM(valor_liquidado) AS valor_total_liquidado
+FROM execucao_mensal
+WHERE ano = 2025;",SELECT SUM(valor_liquidado) AS valor_total_liquidado FROM execucao_mensal WHERE ano = 2025 LIMIT 1000,"[[""4967102997495.42""]]","[[""4967102997495.42""]]",,30150.07,7.063130948999969,0.0019221799993829336,0.14921116699952108,1629,36
+completo,Q016,execucao_financeira,intermediaria,Em qual mês foi registrado o maior valor empenhado em 2025?,ok,True,"SELECT mes, SUM(valor_empenhado) AS total_empenhado FROM execucao_mensal WHERE ano = 2025 GROUP BY mes ORDER BY total_empenhado DESC, mes ASC LIMIT 1;","SELECT mes, SUM(valor_empenhado) AS total_empenhado
+FROM execucao_mensal
+WHERE ano = 2025
+GROUP BY mes
+ORDER BY total_empenhado DESC
+LIMIT 1;","SELECT mes, SUM(valor_empenhado) AS total_empenhado FROM execucao_mensal WHERE ano = 2025 GROUP BY mes ORDER BY total_empenhado DESC LIMIT 1","[[""1"", ""1757134683334.99""]]","[[1, ""1757134683334.99""]]",,30977.39,12.618745753001349,0.0024080429993773578,0.2103107259990793,1635,56
+completo,Q017,classificacao_funcional,intermediaria,Qual função apresentou o maior valor pago em 2025?,erro_execucao,False,"SELECT f.nome, SUM(e.valor_pago) AS total_pago FROM execucao_mensal e JOIN funcao f ON f.codigo = e.codigo_funcao WHERE e.ano = 2025 GROUP BY f.nome ORDER BY total_pago DESC, f.nome ASC LIMIT 1;","SELECT f.nome, SUM(e.valor_pago) AS total_pago
+FROM funcao f
+JOIN orcamento o ON f.codigo = o.codigo_funcao
+JOIN execucao_mensal e ON o.codigo_orgao = e.codigo_orgao
+WHERE o.ano = 2025
+GROUP BY f.nome
+ORDER BY total_pago DESC
+LIMIT 1;","SELECT f.nome, SUM(e.valor_pago) AS total_pago FROM funcao AS f JOIN orcamento AS o ON f.codigo = o.codigo_funcao JOIN execucao_mensal AS e ON o.codigo_orgao = e.codigo_orgao WHERE o.ano = 2025 GROUP BY f.nome ORDER BY total_pago DESC LIMIT 1","[[""Encargos especiais"", ""2828273913102.87""]]",[],O banco recusou a consulta: canceling statement due to statement timeout,975745.26,14.082731815000443,1.3670390089991997,,1630,81
+completo,Q018,emendas,intermediaria,Em qual mês houve a maior quantidade de registros de despesas com emendas parlamentares em 2025?,ok,True,"SELECT mes, COUNT(*) AS quantidade_registros FROM execucao_mensal WHERE ano = 2025 AND com_emenda IS TRUE GROUP BY mes ORDER BY quantidade_registros DESC, mes ASC LIMIT 1;","SELECT mes, COUNT(*) AS quantidade
+FROM execucao_mensal
+WHERE ano = 2025 AND com_emenda = TRUE
+GROUP BY mes
+ORDER BY quantidade DESC
+LIMIT 1;","SELECT mes, COUNT(*) AS quantidade FROM execucao_mensal WHERE ano = 2025 AND com_emenda = TRUE GROUP BY mes ORDER BY quantidade DESC LIMIT 1","[[""12"", ""11076""]]","[[12, 11076]]",,29452.86,9.884531137999147,0.003121792999081663,0.16384619499876862,1643,49
+completo,Q019,execucao_financeira,intermediaria,Qual foi a média mensal do valor pago em 2025?,ok,False,"WITH totais_mensais AS (SELECT mes, SUM(valor_pago) AS total_pago FROM execucao_mensal WHERE ano = 2025 GROUP BY mes) SELECT ROUND(AVG(total_pago), 2) AS media_mensal_pago FROM totais_mensais;","SELECT AVG(valor_pago) AS media_mensal_pago
+FROM execucao_mensal
+WHERE ano = 2025;",SELECT AVG(valor_pago) AS media_mensal_pago FROM execucao_mensal WHERE ano = 2025 LIMIT 1000,"[[""405688628819.44""]]","[[""6154467.177951841499""]]",,30150.07,6.974660809000852,0.0018772940002236282,0.1748087280011532,1632,35
+completo,Q020,execucao_financeira,intermediaria,Qual foi a diferença entre o total empenhado e o total pago em 2025?,ok,False,SELECT SUM(valor_empenhado) - SUM(valor_pago) AS diferenca_empenhado_pago FROM execucao_mensal WHERE ano = 2025;,"SELECT
+  SUM(execucao_mensal.valor_empenhado) AS total_empenhado,
+  SUM(execucao_mensal.valor_pago) AS total_pago,
+  SUM(execucao_mensal.valor_empenhado) - SUM(execucao_mensal.valor_pago) AS diferenca
+FROM
+  execucao_mensal
+WHERE
+  ano = 2025;","SELECT SUM(execucao_mensal.valor_empenhado) AS total_empenhado, SUM(execucao_mensal.valor_pago) AS total_pago, SUM(execucao_mensal.valor_empenhado) - SUM(execucao_mensal.valor_pago) AS diferenca FROM execucao_mensal WHERE ano = 2025 LIMIT 1000","[[""319507129772.96""]]","[[""5187770675606.18"", ""4868263545833.22"", ""319507129772.96""]]",,30974.06,17.384308815000622,0.0034050730009766994,0.24149066999962088,1637,93
+completo,Q021,classificacao_despesa,facil,Qual foi o total pago em despesas de capital em 2025?,ok,True,SELECT SUM(valor_pago) AS total_pago FROM execucao_mensal WHERE ano = 2025 AND categoria_economica = 'DESPESAS DE CAPITAL';,"SELECT SUM(execucao_mensal.valor_pago) AS total_pago_despesas_de_capital
+FROM execucao_mensal
+WHERE ano = 2025 AND categoria_economica = 'DESPESAS DE CAPITAL';",SELECT SUM(execucao_mensal.valor_pago) AS total_pago_despesas_de_capital FROM execucao_mensal WHERE ano = 2025 AND categoria_economica = 'DESPESAS DE CAPITAL' LIMIT 1000,"[[""1979230149627.57""]]","[[""1979230149627.57""]]",,30253.01,15.722431467000206,0.0028212699999130564,0.14763643900005263,1633,56
+completo,Q022,classificacao_despesa,dificil,Qual foi a participação percentual de cada categoria econômica no total pago em 2025?,ok,True,"SELECT categoria_economica, ROUND(100.0 * SUM(valor_pago) / NULLIF((SELECT SUM(valor_pago) FROM execucao_mensal WHERE ano = 2025), 0), 2) AS percentual_total FROM execucao_mensal WHERE ano = 2025 GROUP BY categoria_economica ORDER BY categoria_economica;","SELECT
+    categoria_economica,
+    (SUM(valor_pago) * 100.0 / (SELECT SUM(valor_pago) FROM execucao_mensal WHERE ano = 2025)) AS percentual
+FROM
+    execucao_mensal
+WHERE
+    ano = 2025
+GROUP BY
+    categoria_economica
+ORDER BY
+    percentual DESC;","SELECT categoria_economica, (SUM(valor_pago) * 100.0 / (SELECT SUM(valor_pago) FROM execucao_mensal WHERE ano = 2025)) AS percentual FROM execucao_mensal WHERE ano = 2025 GROUP BY categoria_economica ORDER BY percentual DESC LIMIT 1000","[[""DESPESAS CORRENTES"", ""59.34""], [""DESPESAS DE CAPITAL"", ""40.66""]]","[[""DESPESAS CORRENTES"", ""59.3442275465631561""], [""DESPESAS DE CAPITAL"", ""40.6557724534368439""]]",,61124.48,28.239602859001025,0.013151544000720605,0.6862831580001512,1637,92
+completo,Q023,emendas,intermediaria,Quanto foi pago em despesas correntes provenientes de emendas parlamentares em 2025?,ok,False,SELECT SUM(valor_pago) AS total_pago FROM execucao_mensal WHERE ano = 2025 AND com_emenda IS TRUE AND categoria_economica = 'DESPESAS CORRENTES';,"SELECT SUM(execucao_mensal.valor_pago) AS total_pago_emendas
+FROM execucao_mensal
+JOIN orcamento ON execucao_mensal.codigo_orgao = orcamento.codigo_orgao
+JOIN funcao ON execucao_mensal.codigo_funcao = funcao.codigo
+JOIN subfuncao ON execucao_mensal.codigo_subfuncao = subfuncao.codigo
+WHERE orcamento.categoria_economica = 'DESPESAS CORRENTES' AND execucao_mensal.com_emenda = TRUE AND execucao_mensal.ano = 2025;",SELECT SUM(execucao_mensal.valor_pago) AS total_pago_emendas FROM execucao_mensal JOIN orcamento ON execucao_mensal.codigo_orgao = orcamento.codigo_orgao JOIN funcao ON execucao_mensal.codigo_funcao = funcao.codigo JOIN subfuncao ON execucao_mensal.codigo_subfuncao = subfuncao.codigo WHERE orcamento.categoria_economica = 'DESPESAS CORRENTES' AND execucao_mensal.com_emenda = TRUE AND execucao_mensal.ano = 2025 LIMIT 1000,"[[""24098661574.32""]]","[[""15676896232092.50""]]",,66343.92,28.45788539300156,0.04449197199937771,1.555390608999005,1641,136
+completo,Q024,unidades_gestoras,intermediaria,Quantas unidades gestoras distintas registraram pagamentos positivos em 2025?,ok,True,SELECT COUNT(DISTINCT codigo_unidade_gestora) AS total_unidades_gestoras FROM execucao_mensal WHERE ano = 2025 AND codigo_unidade_gestora IS NOT NULL AND BTRIM(codigo_unidade_gestora) <> '' AND valor_pago > 0;,"SELECT COUNT(DISTINCT codigo_unidade_gestora) AS num_unidades_gestoras
+FROM execucao_mensal
+WHERE ano = 2025 AND valor_pago > 0;",SELECT COUNT(DISTINCT codigo_unidade_gestora) AS num_unidades_gestoras FROM execucao_mensal WHERE ano = 2025 AND valor_pago > 0 LIMIT 1000,"[[""3064""]]",[[3064]],,88826.33,13.549704650000422,0.004019108000647975,1.2229251900007512,1635,48
+completo,Q025,unidades_gestoras,intermediaria,Qual unidade gestora (código e nome) concentrou o maior valor pago em 2025?,bloqueada,False,"SELECT codigo_unidade_gestora, nome_unidade_gestora, SUM(valor_pago) AS total_pago FROM execucao_mensal WHERE ano = 2025 AND codigo_unidade_gestora IS NOT NULL AND nome_unidade_gestora IS NOT NULL AND BTRIM(nome_unidade_gestora) <> '' GROUP BY codigo_unidade_gestora, nome_unidade_gestora ORDER BY total_pago DESC, codigo_unidade_gestora ASC LIMIT 1;","SELECT e.codigo_unidade_gestora, u.nome_unidade_gestora, SUM(e.valor_pago) AS total_pago
+FROM execucao_mensal e
+JOIN orgao o ON e.codigo_orgao = o.codigo
+JOIN unidade_gestora u ON e.codigo_unidade_gestora = u.codigo_unidade_gestora
+WHERE e.ano = 2025
+GROUP BY e.codigo_unidade_gestora, u.nome_unidade_gestora
+ORDER BY total_pago DESC
+LIMIT 1;",,"[[""170600"", ""COORD.GERAL DE CONTROLE DA DIVIDA PUBLICA"", ""2127695030497.72""]]",[],A tabela 'unidade_gestora' não existe ou não pode ser consultada.,,21.935789526000008,,,1639,116
+completo,Q026,localizacao,intermediaria,"Qual estado apresentou o maior valor pago em 2025, considerando somente os registros com UF identificada?",ok,True,"SELECT uf, SUM(valor_pago) AS total_pago FROM execucao_mensal WHERE ano = 2025 AND uf IS NOT NULL GROUP BY uf ORDER BY total_pago DESC, uf ASC LIMIT 1;","SELECT e.uf, SUM(e.valor_pago) AS total_pago
+FROM execucao_mensal e
+WHERE e.ano = 2025 AND e.uf IS NOT NULL
+GROUP BY e.uf
+ORDER BY total_pago DESC
+LIMIT 1;","SELECT e.uf, SUM(e.valor_pago) AS total_pago FROM execucao_mensal AS e WHERE e.ano = 2025 AND e.uf IS NOT NULL GROUP BY e.uf ORDER BY total_pago DESC LIMIT 1","[[""DF"", ""45824215226.36""]]","[[""DF"", ""45824215226.36""]]",,29876.38,17.22145925699988,0.02215651699953014,0.7422640209988458,1642,59
+completo,Q027,restos_a_pagar,dificil,"Qual foi o saldo líquido dos valores de restos a pagar inscritos em 2025, considerando os registros positivos e negativos?",ok,False,SELECT SUM(valor_restos_a_pagar_inscritos) AS saldo_liquido_restos_inscritos FROM execucao_mensal WHERE ano = 2025;,"SELECT SUM(CASE WHEN valor_restos_a_pagar_inscritos > 0 THEN valor_restos_a_pagar_inscritos ELSE 0 END) - SUM(CASE WHEN valor_restos_a_pagar_inscritos < 0 THEN valor_restos_a_pagar_inscritos ELSE 0 END) AS saldo_liquido
+FROM execucao_mensal
+WHERE ano = 2025;",SELECT SUM(CASE WHEN valor_restos_a_pagar_inscritos > 0 THEN valor_restos_a_pagar_inscritos ELSE 0 END) - SUM(CASE WHEN valor_restos_a_pagar_inscritos < 0 THEN valor_restos_a_pagar_inscritos ELSE 0 END) AS saldo_liquido FROM execucao_mensal WHERE ano = 2025 LIMIT 1000,"[[""-56752209.21""]]","[[""3504025582.09""]]",,32622.0,24.90274894600043,0.07556735899925116,1.0625961770001595,1649,92
+completo,Q028,classificacao_funcional,dificil,Quais foram as cinco funções com maior valor pago em 2025?,erro_execucao,False,"SELECT f.nome, SUM(e.valor_pago) AS total_pago FROM execucao_mensal e JOIN funcao f ON f.codigo = e.codigo_funcao WHERE e.ano = 2025 GROUP BY f.codigo, f.nome ORDER BY total_pago DESC, f.nome ASC LIMIT 5;","SELECT f.nome, SUM(em.valor_pago) AS total_pago
+FROM funcao f
+JOIN orcamento o ON f.codigo = o.codigo_funcao
+JOIN execucao_mensal em ON o.codigo_orgao = em.codigo_orgao
+WHERE o.ano = 2025
+GROUP BY f.nome
+ORDER BY total_pago DESC
+LIMIT 5;","SELECT f.nome, SUM(em.valor_pago) AS total_pago FROM funcao AS f JOIN orcamento AS o ON f.codigo = o.codigo_funcao JOIN execucao_mensal AS em ON o.codigo_orgao = em.codigo_orgao WHERE o.ano = 2025 GROUP BY f.nome ORDER BY total_pago DESC LIMIT 5","[[""Encargos especiais"", ""2828273913102.87""], [""Previdência social"", ""1015714968774.63""], [""Assistência social"", ""283847746076.89""], [""Saúde"", ""215951009036.35""], [""Educação"", ""160778289284.43""]]",[],O banco recusou a consulta: canceling statement due to statement timeout,975745.61,17.213060523999957,0.07854598999983864,,1633,81
+completo,Q029,programas_acoes,dificil,Qual programa e ação concentraram o maior valor pago em 2025?,bloqueada,False,"SELECT p.nome_programa, p.nome_acao, SUM(e.valor_pago) AS total_pago FROM execucao_mensal e JOIN programa_acao p ON p.codigo_programa = e.codigo_programa AND p.codigo_acao = e.codigo_acao WHERE e.ano = 2025 GROUP BY p.codigo_programa, p.codigo_acao, p.nome_programa, p.nome_acao ORDER BY total_pago DESC, p.nome_programa ASC, p.nome_acao ASC LIMIT 1;","SELECT
+    p.nome_programa,
+    a.nome_acao,
+    SUM(e.valor_pago) AS total_pago
+FROM
+    orcamento o
+JOIN
+    programa_acao pa ON o.codigo_programa = pa.codigo_programa AND o.codigo_acao = pa.codigo_acao
+JOIN
+    execucao_mensal e ON o.codigo_orgao = e.codigo_orgao AND o.codigo_unidade_orcamentaria = e.codigo_unidade_gestora AND o.codigo_funcao = e.codigo_funcao AND o.codigo_subfuncao = e.codigo_subfuncao AND o.codigo_programa = e.codigo_programa AND o.codigo_acao = e.codigo_acao
+WHERE
+    o.ano = 2025
+GROUP BY
+    p.nome_programa, a.nome_acao
+ORDER BY
+    total_pago DESC
+LIMIT 1;",,"[[""OPERACOES ESPECIAIS: REFINANCIAMENTO DA DIVIDA INTERNA"", ""REFINANCIAMENTO DA DIVIDA PUBLICA MOBILIARIA FEDERAL INTERNA"", ""1356200755156.51""]]",[],"O banco recusou a consulta: missing FROM-clause entry for table ""p""",,37.1012491750007,0.009216510001351708,,1633,185
+completo,Q030,programas_acoes,dificil,Quais foram os cinco programas e ações com maior valor pago em 2025?,ok,True,"SELECT p.nome_programa, p.nome_acao, SUM(e.valor_pago) AS total_pago FROM execucao_mensal e JOIN programa_acao p ON p.codigo_programa = e.codigo_programa AND p.codigo_acao = e.codigo_acao WHERE e.ano = 2025 GROUP BY p.codigo_programa, p.codigo_acao, p.nome_programa, p.nome_acao ORDER BY total_pago DESC, p.nome_programa ASC, p.nome_acao ASC LIMIT 5;","SELECT
+    pa.nome_programa,
+    pa.nome_acao,
+    SUM(em.valor_pago) AS total_pago
+FROM
+    execucao_mensal em
+JOIN
+    programa_acao pa ON em.codigo_programa = pa.codigo_programa AND em.codigo_acao = pa.codigo_acao
+WHERE
+    em.ano = 2025
+GROUP BY
+    pa.nome_programa, pa.nome_acao
+ORDER BY
+    total_pago DESC
+LIMIT 5;","SELECT pa.nome_programa, pa.nome_acao, SUM(em.valor_pago) AS total_pago FROM execucao_mensal AS em JOIN programa_acao AS pa ON em.codigo_programa = pa.codigo_programa AND em.codigo_acao = pa.codigo_acao WHERE em.ano = 2025 GROUP BY pa.nome_programa, pa.nome_acao ORDER BY total_pago DESC LIMIT 5","[[""OPERACOES ESPECIAIS: REFINANCIAMENTO DA DIVIDA INTERNA"", ""REFINANCIAMENTO DA DIVIDA PUBLICA MOBILIARIA FEDERAL INTERNA"", ""1356200755156.51""], [""PREVIDENCIA SOCIAL: PROMOCAO, GARANTIA DE DIREITOS E CIDADANIA"", ""BENEFICIOS PREVIDENCIARIOS"", ""921819473744.92""], [""OPERACOES ESPECIAIS: SERVICO DA DIVIDA INTERNA (JUROS EAMORTIZACOES)"", ""SERVICOS DA DIVIDA PUBLICA FEDERAL INTERNA"", ""576231224763.13""], [""OPERACOES ESPECIAIS: TRANSFERENCIAS CONSTITUCIONAIS E AS DECORRENTES DE LEGISLACAO ESPECIFICA"", ""TRANSFERENCIA AO FUNDO DE PARTICIPACAO DOS MUNICIPIOS - FPM (CF, ART.159)"", ""192390356623.60""], [""OPERACOES ESPECIAIS: TRANSFERENCIAS CONSTITUCIONAIS E AS DECORRENTES DE LEGISLACAO ESPECIFICA"", ""TRANSFERENCIA AO FUNDO DE PARTICIPACAO DOS ESTADOS E DO DISTRITO FEDERAL - FPE (CF, ART.159)"", ""158571443674.53""]]","[[""OPERACOES ESPECIAIS: REFINANCIAMENTO DA DIVIDA INTERNA"", ""REFINANCIAMENTO DA DIVIDA PUBLICA MOBILIARIA FEDERAL INTERNA"", ""1356200755156.51""], [""PREVIDENCIA SOCIAL: PROMOCAO, GARANTIA DE DIREITOS E CIDADANIA"", ""BENEFICIOS PREVIDENCIARIOS"", ""921819473744.92""], [""OPERACOES ESPECIAIS: SERVICO DA DIVIDA INTERNA (JUROS EAMORTIZACOES)"", ""SERVICOS DA DIVIDA PUBLICA FEDERAL INTERNA"", ""576231224763.13""], [""OPERACOES ESPECIAIS: TRANSFERENCIAS CONSTITUCIONAIS E AS DECORRENTES DE LEGISLACAO ESPECIFICA"", ""TRANSFERENCIA AO FUNDO DE PARTICIPACAO DOS MUNICIPIOS - FPM (CF, ART.159)"", ""192390356623.60""], [""OPERACOES ESPECIAIS: TRANSFERENCIAS CONSTITUCIONAIS E AS DECORRENTES DE LEGISLACAO ESPECIFICA"", ""TRANSFERENCIA AO FUNDO DE PARTICIPACAO DOS ESTADOS E DO DISTRITO FEDERAL - FPE (CF, ART.159)"", ""158571443674.53""]]",,34172.85,26.89722114899996,0.022762804001104087,1.1493995529999665,1635,109
+completo,Q031,orcamento,intermediaria,Qual grupo de despesa concentrou o maior valor realizado no orçamento em 2025?,ok,True,"SELECT grupo_despesa, SUM(valor_realizado) AS total_realizado FROM orcamento WHERE ano = 2025 GROUP BY grupo_despesa ORDER BY total_realizado DESC NULLS LAST, grupo_despesa ASC LIMIT 1;","SELECT grupo_despesa, SUM(valor_realizado) AS total_realizado
+FROM orcamento
+WHERE ano = 2025
+GROUP BY grupo_despesa
+ORDER BY total_realizado DESC
+LIMIT 1;","SELECT grupo_despesa, SUM(valor_realizado) AS total_realizado FROM orcamento WHERE ano = 2025 GROUP BY grupo_despesa ORDER BY total_realizado DESC LIMIT 1","[[""Outras Despesas Correntes"", ""2205612691610.39""]]","[[""Outras Despesas Correntes"", ""2205612691610.39""]]",,1121.93,10.96558035199996,0.002915003000452998,0.05921300699992571,1638,52
+completo,Q032,orcamento,dificil,Quais foram os cinco grupos de despesa com maior valor realizado no orçamento em 2025?,ok,True,"SELECT grupo_despesa, SUM(valor_realizado) AS total_realizado FROM orcamento WHERE ano = 2025 GROUP BY grupo_despesa ORDER BY total_realizado DESC NULLS LAST, grupo_despesa ASC LIMIT 5;","SELECT grupo_despesa, SUM(valor_realizado) AS total_realizado
+FROM orcamento
+WHERE ano = 2025
+GROUP BY grupo_despesa
+ORDER BY total_realizado DESC
+LIMIT 5;","SELECT grupo_despesa, SUM(valor_realizado) AS total_realizado FROM orcamento WHERE ano = 2025 GROUP BY grupo_despesa ORDER BY total_realizado DESC LIMIT 5","[[""Outras Despesas Correntes"", ""2205612691610.39""], [""Amortização/Refinanciamento da Dívida"", ""1771616365401.20""], [""Juros e Encargos da Dívida"", ""363469278379.43""], [""Pessoal e Encargos Sociais"", ""319940211676.77""], [""Inversões Financeiras"", ""170316899446.04""]]","[[""Outras Despesas Correntes"", ""2205612691610.39""], [""Amortização/Refinanciamento da Dívida"", ""1771616365401.20""], [""Juros e Encargos da Dívida"", ""363469278379.43""], [""Pessoal e Encargos Sociais"", ""319940211676.77""], [""Inversões Financeiras"", ""170316899446.04""]]",,1122.0,10.986814250998577,0.0018678920005186228,0.014654009000878432,1640,52
+completo,Q033,orcamento,dificil,Qual foi a participação percentual de cada grupo de despesa no valor realizado do orçamento em 2025?,ok,False,"SELECT grupo_despesa, ROUND(100.0 * SUM(valor_realizado) / NULLIF((SELECT SUM(valor_realizado) FROM orcamento WHERE ano = 2025), 0), 2) AS percentual_realizado FROM orcamento WHERE ano = 2025 GROUP BY grupo_despesa ORDER BY grupo_despesa NULLS LAST;","SELECT
+  grupo_despesa,
+  (SUM(valor_realizado) / SUM(valor_inicial)) * 100 AS percentual_participacao
+FROM
+  orcamento
+WHERE
+  ano = 2025
+GROUP BY
+  grupo_despesa
+ORDER BY
+  percentual_participacao DESC;","SELECT grupo_despesa, (SUM(valor_realizado) / SUM(valor_inicial)) * 100 AS percentual_participacao FROM orcamento WHERE ano = 2025 GROUP BY grupo_despesa ORDER BY percentual_participacao DESC LIMIT 1000","[[""Amortização/Refinanciamento da Dívida"", ""36.39""], [""Inversões Financeiras"", ""3.50""], [""Investimentos"", ""0.77""], [""Juros e Encargos da Dívida"", ""7.47""], [""Outras Despesas Correntes"", ""45.31""], [""Pessoal e Encargos Sociais"", ""6.57""], [""Reserva de Contingência"", ""0.00""]]","[[""Inversões Financeiras"", ""101.5810436068080100""], [""Outras Despesas Correntes"", ""91.38711714992477479500""], [""Pessoal e Encargos Sociais"", ""86.71588060447983428800""], [""Amortização/Refinanciamento da Dívida"", ""86.46485809373928016900""], [""Juros e Encargos da Dívida"", ""75.72069483326681955900""], [""Investimentos"", ""47.29125594344819116500""], [""Reserva de Contingência"", ""0.0000000000000000000000000000""]]",,1187.46,13.802120214999377,0.0031888230005279183,0.01759232400036126,1642,75
+completo,Q034,orgaos,intermediaria,Qual órgão superior concentrou o maior valor pago na execução mensal em 2025?,ok,True,"SELECT COALESCE(o.nome_orgao_superior, 'Sem informação') AS orgao_superior, SUM(e.valor_pago) AS total_pago FROM execucao_mensal e LEFT JOIN orgao o ON o.codigo = e.codigo_orgao WHERE e.ano = 2025 GROUP BY 1 ORDER BY total_pago DESC, orgao_superior ASC LIMIT 1;","SELECT o.nome_orgao_superior, SUM(em.valor_pago) AS total_pago
+FROM orgao o
+JOIN execucao_mensal em ON o.codigo = em.codigo_orgao
+WHERE em.ano = 2025
+GROUP BY o.nome_orgao_superior
+ORDER BY total_pago DESC
+LIMIT 1;","SELECT o.nome_orgao_superior, SUM(em.valor_pago) AS total_pago FROM orgao AS o JOIN execucao_mensal AS em ON o.codigo = em.codigo_orgao WHERE em.ano = 2025 GROUP BY o.nome_orgao_superior ORDER BY total_pago DESC LIMIT 1","[[""Ministério da Fazenda"", ""2684995153630.77""]]","[[""Ministério da Fazenda"", ""2684995153630.77""]]",,31874.98,13.50118307899902,0.00736444200083497,0.3945785199994134,1636,74
+completo,Q035,orgaos,dificil,Quais foram os cinco órgãos superiores com maior valor pago na execução mensal em 2025?,ok,True,"SELECT COALESCE(o.nome_orgao_superior, 'Sem informação') AS orgao_superior, SUM(e.valor_pago) AS total_pago FROM execucao_mensal e LEFT JOIN orgao o ON o.codigo = e.codigo_orgao WHERE e.ano = 2025 GROUP BY 1 ORDER BY total_pago DESC, orgao_superior ASC LIMIT 5;","SELECT o.nome_orgao_superior, SUM(e.valor_pago) AS total_pago
+FROM orgao o
+JOIN execucao_mensal e ON o.codigo = e.codigo_orgao
+WHERE e.ano = 2025
+GROUP BY o.nome_orgao_superior
+ORDER BY total_pago DESC
+LIMIT 5;","SELECT o.nome_orgao_superior, SUM(e.valor_pago) AS total_pago FROM orgao AS o JOIN execucao_mensal AS e ON o.codigo = e.codigo_orgao WHERE e.ano = 2025 GROUP BY o.nome_orgao_superior ORDER BY total_pago DESC LIMIT 5","[[""Ministério da Fazenda"", ""2684995153630.77""], [""Ministério da Previdência Social"", ""1063415001864.77""], [""Ministério da Saúde"", ""223775502371.33""], [""Ministério da Educação"", ""204730752604.83""], [""Ministério do Desenvolvimento e Assistência"", ""167626133570.62""]]","[[""Ministério da Fazenda"", ""2684995153630.77""], [""Ministério da Previdência Social"", ""1063415001864.77""], [""Ministério da Saúde"", ""223775502371.33""], [""Ministério da Educação"", ""204730752604.83""], [""Ministério do Desenvolvimento e Assistência"", ""167626133570.62""]]",,31875.42,13.774155474000509,0.002193251000790042,0.3421802980010398,1641,74
+completo,Q036,classificacao_despesa,intermediaria,Qual categoria econômica apresentou o maior valor empenhado em 2025?,ok,True,"SELECT categoria_economica, SUM(valor_empenhado) AS total_empenhado FROM execucao_mensal WHERE ano = 2025 GROUP BY categoria_economica ORDER BY total_empenhado DESC NULLS LAST, categoria_economica ASC LIMIT 1;","SELECT categoria_economica, SUM(valor_empenhado) AS total_empenhado
+FROM execucao_mensal
+WHERE ano = 2025
+GROUP BY categoria_economica
+ORDER BY total_empenhado DESC
+LIMIT 1;","SELECT categoria_economica, SUM(valor_empenhado) AS total_empenhado FROM execucao_mensal WHERE ano = 2025 GROUP BY categoria_economica ORDER BY total_empenhado DESC LIMIT 1","[[""DESPESAS CORRENTES"", ""3076797615678.16""]]","[[""DESPESAS CORRENTES"", ""3076797615678.16""]]",,30974.4,11.47182639699895,0.0021460609987116186,0.23995640199973423,1636,62
+completo,Q037,execucao_financeira,facil,Qual foi o total empenhado em despesas de capital em 2025?,ok,True,SELECT SUM(valor_empenhado) AS total_empenhado FROM execucao_mensal WHERE ano = 2025 AND categoria_economica = 'DESPESAS DE CAPITAL';,"SELECT SUM(execucao_mensal.valor_empenhado) AS total_empenhado
+FROM execucao_mensal
+WHERE ano = 2025 AND categoria_economica = 'DESPESAS DE CAPITAL';",SELECT SUM(execucao_mensal.valor_empenhado) AS total_empenhado FROM execucao_mensal WHERE ano = 2025 AND categoria_economica = 'DESPESAS DE CAPITAL' LIMIT 1000,"[[""2110973059928.02""]]","[[""2110973059928.02""]]",,30253.01,14.524719650999032,0.003404879000299843,0.14668440700006613,1636,56
+completo,Q038,orcamento,intermediaria,Qual foi o valor do orçamento atualizado para cada categoria econômica em 2025?,ok,True,"SELECT categoria_economica, SUM(valor_atualizado) AS total_atualizado FROM orcamento WHERE ano = 2025 GROUP BY categoria_economica ORDER BY categoria_economica NULLS LAST;","SELECT categoria_economica, SUM(valor_atualizado) AS valor_total
+FROM orcamento
+WHERE ano = 2025
+GROUP BY categoria_economica;","SELECT categoria_economica, SUM(valor_atualizado) AS valor_total FROM orcamento WHERE ano = 2025 GROUP BY categoria_economica LIMIT 1000","[[""DESPESAS CORRENTES"", ""3319119904734.67""], [""DESPESAS DE CAPITAL"", ""2386440565804.00""], [""RESERVA DE CONTINGENCIA"", ""32457748911.00""]]","[[""RESERVA DE CONTINGENCIA"", ""32457748911.00""], [""DESPESAS DE CAPITAL"", ""2386440565804.00""], [""DESPESAS CORRENTES"", ""3319119904734.67""]]",,1121.84,7.93766210800095,0.0024760409996815724,0.01313037100044312,1638,40
+completo,Q039,orcamento,dificil,Qual foi a participação percentual de cada categoria econômica no orçamento atualizado de 2025?,bloqueada,False,"SELECT categoria_economica, ROUND(100.0 * SUM(valor_atualizado) / NULLIF((SELECT SUM(valor_atualizado) FROM orcamento WHERE ano = 2025), 0), 2) AS percentual_orcamento FROM orcamento WHERE ano = 2025 GROUP BY categoria_economica ORDER BY categoria_economica NULLS LAST;","SELECT
+  categoria_economica,
+  (SUM(valor_atualizado) / SUM(SUM(valor_atualizado) OVER (PARTITION BY categoria_economica))) * 100 AS percentual
+FROM
+  orcamento
+WHERE
+  ano = 2025
+GROUP BY
+  categoria_economica
+ORDER BY
+  percentual DESC;",,"[[""DESPESAS CORRENTES"", ""57.84""], [""DESPESAS DE CAPITAL"", ""41.59""], [""RESERVA DE CONTINGENCIA"", ""0.57""]]",[],O banco recusou a consulta: aggregate function calls cannot contain window function calls,,18.144805582000117,0.01131035599973984,,1640,82
+completo,Q040,execucao_financeira,intermediaria,Em qual mês foi registrado o menor valor pago em 2025?,ok,False,"SELECT mes, SUM(valor_pago) AS total_pago FROM execucao_mensal WHERE ano = 2025 GROUP BY mes ORDER BY total_pago ASC, mes ASC LIMIT 1;","SELECT mes, valor_pago
+FROM execucao_mensal
+WHERE ano = 2025
+ORDER BY valor_pago ASC
+LIMIT 1;","SELECT mes, valor_pago FROM execucao_mensal WHERE ano = 2025 ORDER BY valor_pago ASC LIMIT 1","[[""2"", ""266116937177.61""]]","[[6, ""-3196742742.40""]]",,30973.94,7.746568028000183,0.0027668220009218203,0.24203386999943177,1632,38
+completo,Q041,classificacao_funcional,intermediaria,Qual subfunção apresentou o maior valor pago na execução mensal em 2025?,ok,True,"SELECT s.nome, SUM(e.valor_pago) AS total_pago FROM execucao_mensal e JOIN subfuncao s ON s.codigo = e.codigo_subfuncao WHERE e.ano = 2025 GROUP BY s.codigo, s.nome ORDER BY total_pago DESC, s.nome ASC LIMIT 1;","SELECT subfuncao.nome, SUM(execucao_mensal.valor_pago) AS total_pago
+FROM execucao_mensal
+JOIN subfuncao ON execucao_mensal.codigo_subfuncao = subfuncao.codigo
+WHERE execucao_mensal.ano = 2025
+GROUP BY subfuncao.nome
+ORDER BY total_pago DESC
+LIMIT 1;","SELECT subfuncao.nome, SUM(execucao_mensal.valor_pago) AS total_pago FROM execucao_mensal JOIN subfuncao ON execucao_mensal.codigo_subfuncao = subfuncao.codigo WHERE execucao_mensal.ano = 2025 GROUP BY subfuncao.nome ORDER BY total_pago DESC LIMIT 1","[[""Refinanciamento da dívida interna"", ""1356200755156.51""]]","[[""Refinanciamento da dívida interna"", ""1356200755156.51""]]",,31910.04,16.294184923999637,0.005507386000317638,0.34897224599990295,1637,87
+completo,Q042,classificacao_funcional,dificil,Quais foram as cinco subfunções com maior valor pago na execução mensal em 2025?,ok,True,"SELECT s.nome, SUM(e.valor_pago) AS total_pago FROM execucao_mensal e JOIN subfuncao s ON s.codigo = e.codigo_subfuncao WHERE e.ano = 2025 GROUP BY s.codigo, s.nome ORDER BY total_pago DESC, s.nome ASC LIMIT 5;","SELECT sf.nome, SUM(em.valor_pago) AS total_pago
+FROM subfuncao sf
+JOIN execucao_mensal em ON sf.codigo = em.codigo_subfuncao
+WHERE em.ano = 2025
+GROUP BY sf.nome
+ORDER BY total_pago DESC
+LIMIT 5;","SELECT sf.nome, SUM(em.valor_pago) AS total_pago FROM subfuncao AS sf JOIN execucao_mensal AS em ON sf.codigo = em.codigo_subfuncao WHERE em.ano = 2025 GROUP BY sf.nome ORDER BY total_pago DESC LIMIT 5","[[""Refinanciamento da dívida interna"", ""1356200755156.51""], [""Previdência básica"", ""930182610798.90""], [""Serviço da dívida interna"", ""576369980426.90""], [""Outras transferências"", ""469013976137.27""], [""Outros encargos especiais"", ""268404606236.56""]]","[[""Refinanciamento da dívida interna"", ""1356200755156.51""], [""Previdência básica"", ""930182610798.90""], [""Serviço da dívida interna"", ""576369980426.90""], [""Outras transferências"", ""469013976137.27""], [""Outros encargos especiais"", ""268404606236.56""]]",,31911.23,14.159423492001224,0.0030903219994797837,0.280727596998986,1639,68
+completo,Q043,modalidade_despesa,facil,Qual foi o total pago em transferências a municípios em 2025?,ok,True,SELECT SUM(valor_pago) AS total_pago FROM execucao_mensal WHERE ano = 2025 AND modalidade_despesa = 'Transferências a Municípios';,"SELECT SUM(execucao_mensal.valor_pago) AS total_pago_transferencias_municipios
+FROM execucao_mensal
+WHERE ano = 2025 AND modalidade_despesa = 'Transferências a Municípios';",SELECT SUM(execucao_mensal.valor_pago) AS total_pago_transferencias_municipios FROM execucao_mensal WHERE ano = 2025 AND modalidade_despesa = 'Transferências a Municípios' LIMIT 1000,"[[""299135402274.82""]]","[[""299135402274.82""]]",,30159.07,10.114679954998792,0.002007921000767965,0.1277584300005401,1634,57
+completo,Q044,modalidade_despesa,facil,Quanto foi pago em transferências a municípios na modalidade fundo a fundo em 2025?,ok,True,SELECT SUM(valor_pago) AS total_pago FROM execucao_mensal WHERE ano = 2025 AND modalidade_despesa = 'Transferências a Municípios - Fundo a Fundo';,"SELECT SUM(execucao_mensal.valor_pago) AS total_pago
+FROM execucao_mensal
+WHERE ano = 2025
+  AND modalidade_despesa = 'Transferências a Municípios - Fundo a Fundo';",SELECT SUM(execucao_mensal.valor_pago) AS total_pago FROM execucao_mensal WHERE ano = 2025 AND modalidade_despesa = 'Transferências a Municípios - Fundo a Fundo' LIMIT 1000,"[[""125282496281.70""]]","[[""125282496281.70""]]",,30165.23,17.249376129000666,0.0029230310010461835,0.22048745999927633,1641,60
+completo,Q045,modalidade_despesa,facil,Qual foi o total pago em transferências a estados e ao Distrito Federal em 2025?,ok,False,SELECT SUM(valor_pago) AS total_pago FROM execucao_mensal WHERE ano = 2025 AND modalidade_despesa = 'Transferências a Estados e ao Distrito Federal';,"SELECT SUM(execucao_mensal.valor_pago) AS total_pago
+FROM execucao_mensal
+WHERE ano = 2025 AND uf IN ('DF', 'ES');","SELECT SUM(execucao_mensal.valor_pago) AS total_pago FROM execucao_mensal WHERE ano = 2025 AND uf IN ('DF', 'ES') LIMIT 1000","[[""303905913330.97""]]","[[""50806910031.09""]]",,24957.33,11.5299921120004,0.00655850799921609,1.8546257329999207,1637,45
+completo,Q046,execucao_financeira,intermediaria,Em qual mês foi registrado o maior valor liquidado em 2025?,ok,False,"SELECT mes, SUM(valor_liquidado) AS total_liquidado FROM execucao_mensal WHERE ano = 2025 GROUP BY mes ORDER BY total_liquidado DESC, mes ASC LIMIT 1;","SELECT mes, MAX(valor_liquidado) AS maior_valor_liquidado
+FROM execucao_mensal
+WHERE ano = 2025
+GROUP BY mes
+ORDER BY maior_valor_liquidado DESC
+LIMIT 1;","SELECT mes, MAX(valor_liquidado) AS maior_valor_liquidado FROM execucao_mensal WHERE ano = 2025 GROUP BY mes ORDER BY maior_valor_liquidado DESC LIMIT 1","[[""1"", ""737206617291.00""]]","[[1, ""344051961358.97""]]",,30977.27,16.38558535300035,0.013191181998990942,0.4860362489998806,1633,55
+completo,Q047,emendas,intermediaria,Qual UF concentrou o maior valor pago em despesas com emendas parlamentares em 2025?,ok,False,"SELECT uf, SUM(valor_pago) AS total_pago FROM execucao_mensal WHERE ano = 2025 AND com_emenda IS TRUE AND uf IS NOT NULL GROUP BY uf ORDER BY total_pago DESC, uf ASC LIMIT 1;","SELECT uf, SUM(valor_pago) AS total_pago
+FROM execucao_mensal
+WHERE ano = 2025 AND com_emenda = TRUE
+GROUP BY uf
+ORDER BY total_pago DESC
+LIMIT 1;","SELECT uf, SUM(valor_pago) AS total_pago FROM execucao_mensal WHERE ano = 2025 AND com_emenda = TRUE GROUP BY uf ORDER BY total_pago DESC LIMIT 1","[[""SP"", ""2356499809.35""]]","[[null, ""6220976170.89""]]",,29457.58,12.964288310000484,0.0027886560001206817,0.15221152100093605,1640,53
+completo,Q048,orcamento,dificil,Qual função apresentou o maior percentual de realização em relação ao orçamento atualizado em 2025?,bloqueada,False,"SELECT f.nome, ROUND(100.0 * SUM(r.valor_realizado) / NULLIF(SUM(r.valor_atualizado), 0), 2) AS percentual_realizado FROM orcamento r JOIN funcao f ON f.codigo = r.codigo_funcao WHERE r.ano = 2025 GROUP BY f.codigo, f.nome HAVING SUM(r.valor_atualizado) <> 0 ORDER BY percentual_realizado DESC, f.nome ASC LIMIT 1;","SELECT
+    f.nome AS funcao,
+    (SUM(e.valor_realizado) / SUM(o.valor_atualizado)) * 100 AS percentual_realizado
+FROM
+    funcao f
+JOIN
+    orcamento o ON f.codigo = o.codigo_funcao
+JOIN
+    execucao_mensal e ON o.codigo_orgao = e.codigo_orgao
+WHERE
+    o.ano = 2025
+GROUP BY
+    f.nome
+ORDER BY
+    percentual_realizado DESC
+LIMIT 1;",,"[[""Assistência social"", ""97.50""]]",[],O banco recusou a consulta: column e.valor_realizado does not exist,,26.48464412999965,0.045823300000847667,,1641,117
+completo,Q049,orcamento,dificil,Qual órgão superior apresentou o maior percentual de empenho em relação ao orçamento atualizado em 2025?,bloqueada,False,"SELECT COALESCE(o.nome_orgao_superior, 'Sem informação') AS orgao_superior, ROUND(100.0 * SUM(r.valor_empenhado) / NULLIF(SUM(r.valor_atualizado), 0), 2) AS percentual_empenhado FROM orcamento r LEFT JOIN orgao o ON o.codigo = r.codigo_orgao WHERE r.ano = 2025 GROUP BY 1 HAVING SUM(r.valor_atualizado) <> 0 ORDER BY percentual_empenhado DESC, orgao_superior ASC LIMIT 1;","SELECT o.nome_orgao_superior,
+       (SUM(empenhado) / SUM(orçado)) * 100 AS percentual_empenho
+FROM orgao o
+JOIN orcamento orc ON o.codigo = orc.codigo_orgao
+WHERE orc.ano = 2025
+GROUP BY o.nome_orgao_superior
+ORDER BY percentual_empenho DESC
+LIMIT 1;",,"[[""Advocacia-Geral da União"", ""99.82""]]",[],"O banco recusou a consulta: column ""empenhado"" does not exist",,18.2127209829996,0.003469318999123061,,1643,91
+completo,Q050,execucao_financeira,intermediaria,Quanto foi pago em despesas de capital durante o segundo semestre de 2025?,ok,False,SELECT SUM(valor_pago) AS total_pago FROM execucao_mensal WHERE ano = 2025 AND mes BETWEEN 7 AND 12 AND categoria_economica = 'DESPESAS DE CAPITAL';,"SELECT SUM(execucao_mensal.valor_pago) AS total_pago
+FROM execucao_mensal
+WHERE ano = 2025
+  AND mes BETWEEN 6 AND 12
+  AND categoria_economica = 'DESPESAS DE CAPITAL';",SELECT SUM(execucao_mensal.valor_pago) AS total_pago FROM execucao_mensal WHERE ano = 2025 AND mes BETWEEN 6 AND 12 AND categoria_economica = 'DESPESAS DE CAPITAL' LIMIT 1000,"[[""797513618401.80""]]","[[""823389765809.81""]]",,31864.34,12.094354958000622,0.005576442999881692,0.27839478599889844,1637,63
+baseline,Q001,classificacao_despesa,facil,Qual foi o total pago em despesas correntes em 2025?,bloqueada,False,SELECT SUM(valor_pago) AS total_pago FROM execucao_mensal WHERE ano = 2025 AND categoria_economica = 'DESPESAS CORRENTES';,"SELECT SUM(execucao_mensal.valor_pago) AS total_pago
+FROM execucao_mensal
+JOIN orcamento ON execucao_mensal.id_orcamento = orcamento.id_orcamento
+WHERE orcamento.ano = 2025 AND execucao_mensal.tipo = 'corrente';",,"[[""2889033396205.65""]]",[],O banco recusou a consulta: column execucao_mensal.id_orcamento does not exist,,15.073198265999963,0.003786007999224239,,260,74
+baseline,Q002,emendas,facil,Qual foi o total pago em despesas com emendas parlamentares em 2025?,bloqueada,False,SELECT SUM(valor_pago) AS total_pago FROM execucao_mensal WHERE ano = 2025 AND com_emenda IS TRUE;,"SELECT SUM(execucao_mensal.valor_pago) AS total_pago_emendas
+FROM execucao_mensal
+JOIN orcamento ON execucao_mensal.id_orcamento = orcamento.id_orcamento
+WHERE orcamento.id_emenda > 0 AND YEAR(execucao_mensal.data_execucao) = 2025;",,"[[""31539496508.06""]]",[],O banco recusou a consulta: column execucao_mensal.id_orcamento does not exist,,13.70942441799889,0.001402851999955601,,263,81
+baseline,Q003,classificacao_despesa,intermediaria,Qual grupo de despesa teve o maior valor pago em 2025?,bloqueada,False,"SELECT grupo_despesa, SUM(valor_pago) AS total_pago FROM execucao_mensal WHERE ano = 2025 GROUP BY grupo_despesa ORDER BY total_pago DESC, grupo_despesa ASC LIMIT 1;","SELECT orgao.nome_orgao_superior AS nome_orgao, SUM(execucao_mensal.valor_pago) AS total_pago
+FROM execucao_mensal
+JOIN orcamento ON execucao_mensal.id_orcamento = orcamento.id_orcamento
+JOIN orgao ON orcamento.id_orgao = orgao.id_orgao
+WHERE execucao_mensal.data_execucao >= '2025-01-01' AND execucao_mensal.data_execucao <= '2025-12-31'
+GROUP BY orgao.nome_orgao_superior
+ORDER BY total_pago DESC
+LIMIT 1;",,"[[""Outras Despesas Correntes"", ""2205623906149.45""]]",[],O banco recusou a consulta: column execucao_mensal.id_orcamento does not exist,,21.18474926199997,0.0023028389987302944,,260,146
+baseline,Q004,classificacao_despesa,intermediaria,Qual modalidade de despesa recebeu o maior valor pago em 2025?,bloqueada,False,"SELECT modalidade_despesa, SUM(valor_pago) AS total_pago FROM execucao_mensal WHERE ano = 2025 GROUP BY modalidade_despesa ORDER BY total_pago DESC NULLS LAST, modalidade_despesa ASC LIMIT 1;","SELECT
+    execucao_mensal.modalidade_despesa,
+    SUM(execucao_mensal.valor_pago) AS total_pago
+FROM
+    execucao_mensal
+JOIN
+    orcamento ON execucao_mensal.id_orcamento = orcamento.id_orcamento
+WHERE
+    YEAR(execucao_mensal.data_execucao) = 2025
+GROUP BY
+    execucao_mensal.modalidade_despesa
+ORDER BY
+    total_pago DESC
+LIMIT 1;",,"[[""Aplicações Diretas"", ""4061337456346.12""]]",[],O banco recusou a consulta: column execucao_mensal.id_orcamento does not exist,,17.387716612000077,0.0015527209998253966,,261,119
+baseline,Q005,restos_a_pagar,intermediaria,Em qual mês ocorreu o maior valor de restos a pagar pagos em 2025?,bloqueada,False,"SELECT mes, SUM(valor_restos_a_pagar_pagos) AS total_restos_pagos FROM execucao_mensal WHERE ano = 2025 GROUP BY mes ORDER BY total_restos_pagos DESC, mes ASC LIMIT 1;","SELECT
+    EXTRACT(MONTH FROM execucao_mensal.data_execucao) AS mes,
+    SUM(execucao_mensal.valor_pago) AS total_pagar
+FROM
+    execucao_mensal
+JOIN
+    orgao ON execucao_mensal.orgao_id = orgao.id
+WHERE
+    EXTRACT(YEAR FROM execucao_mensal.data_execucao) = 2025
+GROUP BY
+    EXTRACT(MONTH FROM execucao_mensal.data_execucao)
+ORDER BY
+    total_pagar DESC
+LIMIT 1;",,"[[""1"", ""134828868899.79""]]",[],O banco recusou a consulta: column execucao_mensal.orgao_id does not exist,,19.443739131000257,0.0028360999986034585,,264,134
+baseline,Q006,orcamento,intermediaria,Qual órgão superior teve o maior orçamento atualizado em 2025?,bloqueada,False,"SELECT COALESCE(o.nome_orgao_superior, 'Sem informação') AS orgao_superior, SUM(r.valor_atualizado) AS total_orcamento_atualizado FROM orcamento r LEFT JOIN orgao o ON o.codigo = r.codigo_orgao WHERE r.ano = 2025 GROUP BY 1 ORDER BY total_orcamento_atualizado DESC, orgao_superior ASC LIMIT 1;","SELECT orgao.nome_orgao_superior, SUM(orcamento.orcamento) AS total_orcamento
+FROM orcamento
+JOIN orgao ON orcamento.orgao_id = orgao.id
+WHERE orcamento.ano = 2025
+GROUP BY orgao.nome_orgao_superior
+ORDER BY total_orcamento DESC
+LIMIT 1;",,"[[""Ministério da Fazenda"", ""3207213568813.00""]]",[],O banco recusou a consulta: column orcamento.orgao_id does not exist,,12.213052537999829,0.004439963999175234,,260,80
+baseline,Q007,orcamento,intermediaria,Qual foi a diferença total entre o orçamento atualizado e o orçamento inicial em 2025?,bloqueada,False,SELECT SUM(valor_atualizado - valor_inicial) AS diferenca_orcamentaria FROM orcamento WHERE ano = 2025;,"SELECT
+    orgao.nome_orgao_superior AS 'Ministério',
+    SUM(execucao_mensal.valor_pago) AS 'Gasto',
+    SUM(orcamento.orcamento) AS 'Orçado'
+FROM
+    execucao_mensal
+JOIN
+    orcamento ON execucao_mensal.id_orcamento = orcamento.id
+JOIN
+    orgao ON orcamento.id_orgao = orgao.id
+WHERE
+    execucao_mensal.mes = 12 AND execucao_mensal.ano = 2025
+GROUP BY
+    orgao.nome_orgao_superior
+ORDER BY
+    'Gasto' DESC;",,"[[""114858147731.00""]]",[],O banco recusou a consulta: column execucao_mensal.id_orcamento does not exist,,22.23019231499893,0.002240107000034186,,266,152
+baseline,Q008,orcamento,intermediaria,Qual foi o percentual do orçamento atualizado que foi realizado em 2025?,bloqueada,False,"SELECT ROUND(100.0 * SUM(valor_realizado) / NULLIF(SUM(valor_atualizado), 0), 2) AS percentual_realizado FROM orcamento WHERE ano = 2025;","SELECT
+    orgao.nome_orgao_superior AS 'Ministério',
+    SUM(execucao_mensal.valor_pago) AS 'Gasto Realizado',
+    SUM(orcamento.orcamento) AS 'Orçamento Orçado',
+    (SUM(execucao_mensal.valor_pago) / SUM(orcamento.orcamento)) * 100 AS 'Percentual Realizado'
+FROM
+    execucao_mensal
+JOIN
+    orcamento ON execucao_mensal.id_orcamento = orcamento.id_orcamento
+JOIN
+    orgao ON orcamento.id_orgao = orgao.id_orgao
+WHERE
+    YEAR(execucao_mensal.data_execucao) = 2025
+GROUP BY
+    orgao.nome_orgao_superior
+ORDER BY
+    'Percentual Realizado' DESC;",,"[[""84.84""]]",[],O banco recusou a consulta: column execucao_mensal.id_orcamento does not exist,,29.07171585099968,0.002004713998758234,,262,188
+baseline,Q009,orcamento,intermediaria,Qual função apresentou o maior valor realizado no orçamento em 2025?,bloqueada,False,"SELECT f.nome, SUM(r.valor_realizado) AS total_realizado FROM orcamento r JOIN funcao f ON f.codigo = r.codigo_funcao WHERE r.ano = 2025 GROUP BY f.nome ORDER BY total_realizado DESC, f.nome ASC LIMIT 1;","SELECT orgao.nome_orgao_superior AS nome_ministerio,
+       SUM(execucao_mensal.valor_pago) AS total_gasto,
+       SUM(orcamento.orcamento) AS total_orcado
+FROM execucao_mensal
+JOIN orcamento ON execucao_mensal.id_orcamento = orcamento.id_orcamento
+JOIN orgao ON execucao_mensal.id_orgao = orgao.id_orgao
+WHERE YEAR(execucao_mensal.data_execucao) = 2025
+GROUP BY orgao.nome_orgao_superior
+ORDER BY total_gasto DESC
+LIMIT 1;",,"[[""Encargos especiais"", ""2828272889584.67""]]",[],O banco recusou a consulta: column execucao_mensal.id_orcamento does not exist,,23.47243571999934,0.0014737420005985769,,260,143
+baseline,Q010,orcamento,intermediaria,Qual subfunção apresentou o maior valor realizado no orçamento em 2025?,bloqueada,False,"SELECT s.nome, SUM(r.valor_realizado) AS total_realizado FROM orcamento r JOIN subfuncao s ON s.codigo = r.codigo_subfuncao WHERE r.ano = 2025 GROUP BY s.nome ORDER BY total_realizado DESC, s.nome ASC LIMIT 1;","SELECT subfuncao.nome_subfuncao, SUM(orcamento.orcamento) AS total_orcamento
+FROM orcamento
+JOIN subfuncao ON orcamento.id_subfuncao = subfuncao.id_subfuncao
+WHERE orcamento.ano = 2025
+GROUP BY subfuncao.nome_subfuncao
+ORDER BY total_orcamento DESC
+LIMIT 1;",,"[[""Refinanciamento da dívida interna"", ""1356200755156.51""]]",[],O banco recusou a consulta: column orcamento.id_subfuncao does not exist,,13.05065300500064,0.0027879790013685124,,262,86
+baseline,Q011,restos_a_pagar,facil,Qual foi o total de restos a pagar cancelados em 2025?,bloqueada,False,SELECT SUM(valor_restos_a_pagar_cancelados) AS total_restos_cancelados FROM execucao_mensal WHERE ano = 2025;,"SELECT SUM(execucao_mensal.valor_pago) AS total_cancelados
+FROM execucao_mensal
+JOIN orcamento ON execucao_mensal.id_orcamento = orcamento.id_orcamento
+WHERE orcamento.ano = 2025 AND execucao_mensal.status = 'cancelado';",,"[[""13061778844.56""]]",[],O banco recusou a consulta: column execucao_mensal.id_orcamento does not exist,,11.183157024999673,0.0011311170001135906,,259,75
+baseline,Q012,localizacao,intermediaria,Qual município e UF apresentaram o maior valor pago em 2025?,bloqueada,False,"SELECT COALESCE(uf, 'Sem UF') AS uf, municipio, SUM(valor_pago) AS total_pago FROM execucao_mensal WHERE ano = 2025 AND municipio IS NOT NULL AND BTRIM(municipio) <> '' GROUP BY COALESCE(uf, 'Sem UF'), municipio ORDER BY total_pago DESC, uf ASC, municipio ASC LIMIT 1;","SELECT
+    m.nome_municipio,
+    uf.sigla_uf,
+    SUM(execucao_mensal.valor_pago) AS total_pago
+FROM
+    execucao_mensal
+JOIN
+    municipio m ON execucao_mensal.id_municipio = m.id_municipio
+JOIN
+    uf ON m.id_uf = uf.id_uf
+WHERE
+    YEAR(execucao_mensal.data_execucao) = 2025
+GROUP BY
+    m.nome_municipio, uf.sigla_uf
+ORDER BY
+    total_pago DESC
+LIMIT 1;",,"[[""RS"", ""PORTO ALEGRE"", ""2554377366.33""]]",[],A tabela 'municipio' não existe ou não pode ser consultada.,,20.46187499699954,,,258,131
+baseline,Q013,localizacao,intermediaria,"Quantos municípios distintos, considerando suas respectivas UFs, tiveram pagamentos positivos em 2025?",bloqueada,False,"SELECT COUNT(DISTINCT (uf, municipio)) AS total_municipios FROM execucao_mensal WHERE ano = 2025 AND uf IS NOT NULL AND municipio IS NOT NULL AND BTRIM(municipio) <> '' AND valor_pago > 0;","SELECT COUNT(DISTINCT municipio.nome_municipio) AS num_municipios
+FROM execucao_mensal
+JOIN orcamento ON execucao_mensal.id_orcamento = orcamento.id_orcamento
+JOIN municipio ON orcamento.id_municipio = municipio.id_municipio
+WHERE execucao_mensal.valor_pago > 0 AND YEAR(execucao_mensal.data_execucao) = 2025;",,"[[""282""]]",[],A tabela 'municipio' não existe ou não pode ser consultada.,,15.328588428999865,,,271,100
+baseline,Q014,localizacao,intermediaria,Qual percentual do valor pago em 2025 está associado a registros sem UF informada?,bloqueada,False,"SELECT ROUND(100.0 * SUM(valor_pago) FILTER (WHERE uf IS NULL) / NULLIF(SUM(valor_pago), 0), 2) AS percentual_sem_uf FROM execucao_mensal WHERE ano = 2025;","SELECT
+    SUM(execucao_mensal.valor_pago) AS total_pago,
+    COUNT(*) AS total_registros,
+    SUM(CASE WHEN execucao_mensal.uf IS NULL THEN execucao_mensal.valor_pago ELSE 0 END) AS total_sem_uf,
+    (SUM(CASE WHEN execucao_mensal.uf IS NULL THEN execucao_mensal.valor_pago ELSE 0 END) * 100.0 / SUM(execucao_mensal.valor_pago)) AS percentual_sem_uf
+FROM
+    execucao_mensal
+WHERE
+    YEAR(execucao_mensal.data_execucao) = 2025;",,"[[""94.13""]]",[],O banco recusou a consulta: column execucao_mensal.data_execucao does not exist,,23.19634846400004,0.022600460000830935,,263,150
+baseline,Q015,execucao_financeira,facil,Qual foi o valor total liquidado em 2025?,bloqueada,False,SELECT SUM(valor_liquidado) AS total_liquidado FROM execucao_mensal WHERE ano = 2025;,"SELECT SUM(execucao_mensal.valor_pago) AS valor_total_liquidado
+FROM execucao_mensal
+JOIN orcamento ON execucao_mensal.id_orcamento = orcamento.id_orcamento
+WHERE orcamento.ano = 2025;",,"[[""4967102997495.42""]]",[],O banco recusou a consulta: column execucao_mensal.id_orcamento does not exist,,12.599166508000053,0.0028806329992221436,,255,65
+baseline,Q016,execucao_financeira,intermediaria,Em qual mês foi registrado o maior valor empenhado em 2025?,bloqueada,False,"SELECT mes, SUM(valor_empenhado) AS total_empenhado FROM execucao_mensal WHERE ano = 2025 GROUP BY mes ORDER BY total_empenhado DESC, mes ASC LIMIT 1;","SELECT m.nome_mes, SUM(execucao_mensal.valor_pago) AS total_empenhado
+FROM execucao_mensal
+JOIN mes m ON execucao_mensal.mes_id = m.id
+WHERE YEAR(execucao_mensal.data_empenho) = 2025
+GROUP BY m.nome_mes
+ORDER BY total_empenhado DESC
+LIMIT 1;",,"[[""1"", ""1757134683334.99""]]",[],A tabela 'mes' não existe ou não pode ser consultada.,,20.022489574001156,,,261,91
+baseline,Q017,classificacao_funcional,intermediaria,Qual função apresentou o maior valor pago em 2025?,bloqueada,False,"SELECT f.nome, SUM(e.valor_pago) AS total_pago FROM execucao_mensal e JOIN funcao f ON f.codigo = e.codigo_funcao WHERE e.ano = 2025 GROUP BY f.nome ORDER BY total_pago DESC, f.nome ASC LIMIT 1;","SELECT orgao.nome_orgao_superior AS nome_ministerio,
+       orgao.nome AS nome_orgao,
+       SUM(execucao_mensal.valor_pago) AS total_pago
+FROM execucao_mensal
+JOIN orcamento ON execucao_mensal.id_orcamento = orcamento.id_orcamento
+JOIN orgao ON orcamento.id_orgao = orgao.id_orgao
+WHERE YEAR(execucao_mensal.data_execucao) = 2025
+GROUP BY orgao.nome_orgao_superior, orgao.nome
+ORDER BY total_pago DESC
+LIMIT 1;",,"[[""Encargos especiais"", ""2828273913102.87""]]",[],O banco recusou a consulta: column execucao_mensal.id_orcamento does not exist,,26.41742160600006,0.004123774000618141,,256,135
+baseline,Q018,emendas,intermediaria,Em qual mês houve a maior quantidade de registros de despesas com emendas parlamentares em 2025?,bloqueada,False,"SELECT mes, COUNT(*) AS quantidade_registros FROM execucao_mensal WHERE ano = 2025 AND com_emenda IS TRUE GROUP BY mes ORDER BY quantidade_registros DESC, mes ASC LIMIT 1;","SELECT EXTRACT(MONTH FROM execucao_mensal.data_execucao) AS mes, COUNT(*) AS quantidade
+FROM execucao_mensal
+JOIN orcamento ON execucao_mensal.id_orcamento = orcamento.id_orcamento
+WHERE EXTRACT(YEAR FROM execucao_mensal.data_execucao) = 2025
+  AND orcamento.emenda_parlamentar = TRUE
+GROUP BY mes
+ORDER BY quantidade DESC
+LIMIT 1;",,"[[""12"", ""11076""]]",[],O banco recusou a consulta: column execucao_mensal.id_orcamento does not exist,,23.55367856799967,0.0021692560003430117,,269,111
+baseline,Q019,execucao_financeira,intermediaria,Qual foi a média mensal do valor pago em 2025?,bloqueada,False,"WITH totais_mensais AS (SELECT mes, SUM(valor_pago) AS total_pago FROM execucao_mensal WHERE ano = 2025 GROUP BY mes) SELECT ROUND(AVG(total_pago), 2) AS media_mensal_pago FROM totais_mensais;","SELECT AVG(execucao_mensal.valor_pago) AS media_mensal_pago
+FROM execucao_mensal
+JOIN orcamento ON execucao_mensal.id_orcamento = orcamento.id_orcamento
+WHERE YEAR(execucao_mensal.data_execucao) = 2025;",,"[[""405688628819.44""]]",[],O banco recusou a consulta: column execucao_mensal.id_orcamento does not exist,,11.419228335000298,0.002815462001308333,,258,74
+baseline,Q020,execucao_financeira,intermediaria,Qual foi a diferença entre o total empenhado e o total pago em 2025?,bloqueada,False,SELECT SUM(valor_empenhado) - SUM(valor_pago) AS diferenca_empenhado_pago FROM execucao_mensal WHERE ano = 2025;,"SELECT
+    SUM(execucao_mensal.valor_empenhado) AS total_empenhado,
+    SUM(execucao_mensal.valor_pago) AS total_pago,
+    SUM(execucao_mensal.valor_empenhado) - SUM(execucao_mensal.valor_pago) AS diferenca
+FROM
+    execucao_mensal
+WHERE
+    YEAR(execucao_mensal.data_execucao) = 2025;",,"[[""319507129772.96""]]",[],O banco recusou a consulta: column execucao_mensal.data_execucao does not exist,,15.268739294000625,0.0024182719989767065,,263,104
+baseline,Q021,classificacao_despesa,facil,Qual foi o total pago em despesas de capital em 2025?,bloqueada,False,SELECT SUM(valor_pago) AS total_pago FROM execucao_mensal WHERE ano = 2025 AND categoria_economica = 'DESPESAS DE CAPITAL';,"SELECT SUM(execucao_mensal.valor_pago) AS total_pago
+FROM execucao_mensal
+JOIN orcamento ON execucao_mensal.id_orcamento = orcamento.id_orcamento
+WHERE orcamento.tipo = 'capital' AND YEAR(execucao_mensal.data_execucao) = 2025;",,"[[""1979230149627.57""]]",[],O banco recusou a consulta: column execucao_mensal.id_orcamento does not exist,,11.575402851000035,0.0031782209989614785,,259,78
+baseline,Q022,classificacao_despesa,dificil,Qual foi a participação percentual de cada categoria econômica no total pago em 2025?,bloqueada,False,"SELECT categoria_economica, ROUND(100.0 * SUM(valor_pago) / NULLIF((SELECT SUM(valor_pago) FROM execucao_mensal WHERE ano = 2025), 0), 2) AS percentual_total FROM execucao_mensal WHERE ano = 2025 GROUP BY categoria_economica ORDER BY categoria_economica;","SELECT
+    categoria_economica.nome AS categoria,
+    (SUM(execucao_mensal.valor_pago) * 100.0 / SUM(execucao_mensal.valor_pago) OVER ()) AS percentual
+FROM
+    execucao_mensal
+JOIN
+    categoria_economica ON execucao_mensal.categoria_economica_id = categoria_economica.id
+WHERE
+    YEAR(execucao_mensal.data_execucao) = 2025
+GROUP BY
+    categoria_economica.nome
+ORDER BY
+    percentual DESC;",,"[[""DESPESAS CORRENTES"", ""59.34""], [""DESPESAS DE CAPITAL"", ""40.66""]]",[],A tabela 'categoria_economica' não existe ou não pode ser consultada.,,19.304479095000715,,,263,129
+baseline,Q023,emendas,intermediaria,Quanto foi pago em despesas correntes provenientes de emendas parlamentares em 2025?,bloqueada,False,SELECT SUM(valor_pago) AS total_pago FROM execucao_mensal WHERE ano = 2025 AND com_emenda IS TRUE AND categoria_economica = 'DESPESAS CORRENTES';,"SELECT SUM(execucao_mensal.valor_pago) AS total_pago
+FROM execucao_mensal
+JOIN orcamento ON execucao_mensal.id_orcamento = orcamento.id_orcamento
+JOIN orgao ON orcamento.id_orgao = orgao.id_orgao
+WHERE execucao_mensal.data_execucao BETWEEN '2025-01-01' AND '2025-12-31'
+  AND orcamento.emenda_parlamentar = TRUE
+  AND execucao_mensal.tipo_gasto = 'corrente';",,"[[""24098661574.32""]]",[],O banco recusou a consulta: column execucao_mensal.id_orcamento does not exist,,20.025973276000514,0.0031524200003332226,,267,132
+baseline,Q024,unidades_gestoras,intermediaria,Quantas unidades gestoras distintas registraram pagamentos positivos em 2025?,bloqueada,False,SELECT COUNT(DISTINCT codigo_unidade_gestora) AS total_unidades_gestoras FROM execucao_mensal WHERE ano = 2025 AND codigo_unidade_gestora IS NOT NULL AND BTRIM(codigo_unidade_gestora) <> '' AND valor_pago > 0;,"SELECT COUNT(DISTINCT orgao.nome_orgao_superior) AS num_unidades_gestoras
+FROM execucao_mensal
+JOIN orgao ON execucao_mensal.orgao_id = orgao.id
+WHERE execucao_mensal.valor_pago > 0 AND YEAR(execucao_mensal.data_execucao) = 2025;",,"[[""3064""]]",[],O banco recusou a consulta: column execucao_mensal.orgao_id does not exist,,13.095762095999817,0.00258740700155613,,261,84
+baseline,Q025,unidades_gestoras,intermediaria,Qual unidade gestora (código e nome) concentrou o maior valor pago em 2025?,bloqueada,False,"SELECT codigo_unidade_gestora, nome_unidade_gestora, SUM(valor_pago) AS total_pago FROM execucao_mensal WHERE ano = 2025 AND codigo_unidade_gestora IS NOT NULL AND nome_unidade_gestora IS NOT NULL AND BTRIM(nome_unidade_gestora) <> '' GROUP BY codigo_unidade_gestora, nome_unidade_gestora ORDER BY total_pago DESC, codigo_unidade_gestora ASC LIMIT 1;","SELECT orgao.codigo_orgao, orgao.nome_orgao_superior, SUM(execucao_mensal.valor_pago) AS total_pago
+FROM execucao_mensal
+JOIN orgao ON execucao_mensal.orgao_id = orgao.id
+WHERE YEAR(execucao_mensal.data_execucao) = 2025
+GROUP BY orgao.codigo_orgao, orgao.nome_orgao_superior
+ORDER BY total_pago DESC
+LIMIT 1;",,"[[""170600"", ""COORD.GERAL DE CONTROLE DA DIVIDA PUBLICA"", ""2127695030497.72""]]",[],O banco recusou a consulta: column execucao_mensal.orgao_id does not exist,,16.54010541899879,0.002044533999651321,,265,106
+baseline,Q026,localizacao,intermediaria,"Qual estado apresentou o maior valor pago em 2025, considerando somente os registros com UF identificada?",bloqueada,False,"SELECT uf, SUM(valor_pago) AS total_pago FROM execucao_mensal WHERE ano = 2025 AND uf IS NOT NULL GROUP BY uf ORDER BY total_pago DESC, uf ASC LIMIT 1;","SELECT orgao.nome_orgao_superior AS estado, SUM(execucao_mensal.valor_pago) AS total_pago
+FROM execucao_mensal
+JOIN orcamento ON execucao_mensal.id_orcamento = orcamento.id_orcamento
+JOIN orgao ON orcamento.id_orgao = orgao.id_orgao
+WHERE execucao_mensal.data_execucao >= '2025-01-01' AND execucao_mensal.data_execucao <= '2025-12-31'
+GROUP BY orgao.nome_orgao_superior
+ORDER BY total_pago DESC
+LIMIT 1;",,"[[""DF"", ""45824215226.36""]]",[],O banco recusou a consulta: column execucao_mensal.id_orcamento does not exist,,21.379725404000055,0.002125475999491755,,268,144
+baseline,Q027,restos_a_pagar,dificil,"Qual foi o saldo líquido dos valores de restos a pagar inscritos em 2025, considerando os registros positivos e negativos?",bloqueada,False,SELECT SUM(valor_restos_a_pagar_inscritos) AS saldo_liquido_restos_inscritos FROM execucao_mensal WHERE ano = 2025;,"SELECT
+    orgao.nome_orgao_superior AS nome_ministerio,
+    SUM(execucao_mensal.valor_pago) AS saldo_liquido
+FROM
+    execucao_mensal
+JOIN
+    orgao ON execucao_mensal.orgao_id = orgao.id
+WHERE
+    execucao_mensal.data_execucao BETWEEN '2025-01-01' AND '2025-12-31'
+    AND execucao_mensal.valor_pago > 0
+GROUP BY
+    orgao.nome_orgao_superior;",,"[[""-56752209.21""]]",[],O banco recusou a consulta: column execucao_mensal.orgao_id does not exist,,19.972744982000222,0.0021120290002727415,,275,133
+baseline,Q028,classificacao_funcional,dificil,Quais foram as cinco funções com maior valor pago em 2025?,bloqueada,False,"SELECT f.nome, SUM(e.valor_pago) AS total_pago FROM execucao_mensal e JOIN funcao f ON f.codigo = e.codigo_funcao WHERE e.ano = 2025 GROUP BY f.codigo, f.nome ORDER BY total_pago DESC, f.nome ASC LIMIT 5;","SELECT
+    orgao.nome_orgao_superior AS ministério,
+    orgao.nome AS órgão,
+    SUM(execucao_mensal.valor_pago) AS total_pago
+FROM
+    execucao_mensal
+JOIN
+    orcamento ON execucao_mensal.id_orcamento = orcamento.id_orcamento
+JOIN
+    orgao ON orcamento.id_orgao = orgao.id_orgao
+WHERE
+    YEAR(execucao_mensal.data_execucao) = 2025
+GROUP BY
+    orgao.nome_orgao_superior, orgao.nome
+ORDER BY
+    total_pago DESC
+LIMIT 5;",,"[[""Encargos especiais"", ""2828273913102.87""], [""Previdência social"", ""1015714968774.63""], [""Assistência social"", ""283847746076.89""], [""Saúde"", ""215951009036.35""], [""Educação"", ""160778289284.43""]]",[],O banco recusou a consulta: column execucao_mensal.id_orcamento does not exist,,21.079621548000432,0.0027769330008595716,,259,143
+baseline,Q029,programas_acoes,dificil,Qual programa e ação concentraram o maior valor pago em 2025?,bloqueada,False,"SELECT p.nome_programa, p.nome_acao, SUM(e.valor_pago) AS total_pago FROM execucao_mensal e JOIN programa_acao p ON p.codigo_programa = e.codigo_programa AND p.codigo_acao = e.codigo_acao WHERE e.ano = 2025 GROUP BY p.codigo_programa, p.codigo_acao, p.nome_programa, p.nome_acao ORDER BY total_pago DESC, p.nome_programa ASC, p.nome_acao ASC LIMIT 1;","SELECT
+    orcamento.programa,
+    orcamento.acao,
+    SUM(execucao_mensal.valor_pago) AS total_pago
+FROM
+    execucao_mensal
+JOIN
+    orcamento ON execucao_mensal.id_orcamento = orcamento.id_orcamento
+WHERE
+    YEAR(execucao_mensal.data_execucao) = 2025
+GROUP BY
+    orcamento.programa,
+    orcamento.acao
+ORDER BY
+    total_pago DESC
+LIMIT 1;",,"[[""OPERACOES ESPECIAIS: REFINANCIAMENTO DA DIVIDA INTERNA"", ""REFINANCIAMENTO DA DIVIDA PUBLICA MOBILIARIA FEDERAL INTERNA"", ""1356200755156.51""]]",[],O banco recusou a consulta: column execucao_mensal.id_orcamento does not exist,,17.37859573700007,0.0018472850006219232,,259,120
+baseline,Q030,programas_acoes,dificil,Quais foram os cinco programas e ações com maior valor pago em 2025?,bloqueada,False,"SELECT p.nome_programa, p.nome_acao, SUM(e.valor_pago) AS total_pago FROM execucao_mensal e JOIN programa_acao p ON p.codigo_programa = e.codigo_programa AND p.codigo_acao = e.codigo_acao WHERE e.ano = 2025 GROUP BY p.codigo_programa, p.codigo_acao, p.nome_programa, p.nome_acao ORDER BY total_pago DESC, p.nome_programa ASC, p.nome_acao ASC LIMIT 5;","SELECT
+    orgao.nome_orgao_superior AS ministério,
+    orgao.nome AS órgão,
+    programa.nome_programa AS programa,
+    acao.nome_acao AS acao,
+    SUM(execucao_mensal.valor_pago) AS total_pago
+FROM
+    execucao_mensal
+JOIN
+    orcamento ON execucao_mensal.id_orcamento = orcamento.id_orcamento
+JOIN
+    programa ON orcamento.id_programa = programa.id_programa
+JOIN
+    acao ON orcamento.id_acao = acao.id_acao
+JOIN
+    orgao ON orcamento.id_orgao = orgao.id_orgao
+WHERE
+    YEAR(execucao_mensal.data_execucao) = 2025
+GROUP BY
+    orgao.nome_orgao_superior, orgao.nome, programa.nome_programa, acao.nome_acao
+ORDER BY
+    total_pago DESC
+LIMIT 5;",,"[[""OPERACOES ESPECIAIS: REFINANCIAMENTO DA DIVIDA INTERNA"", ""REFINANCIAMENTO DA DIVIDA PUBLICA MOBILIARIA FEDERAL INTERNA"", ""1356200755156.51""], [""PREVIDENCIA SOCIAL: PROMOCAO, GARANTIA DE DIREITOS E CIDADANIA"", ""BENEFICIOS PREVIDENCIARIOS"", ""921819473744.92""], [""OPERACOES ESPECIAIS: SERVICO DA DIVIDA INTERNA (JUROS EAMORTIZACOES)"", ""SERVICOS DA DIVIDA PUBLICA FEDERAL INTERNA"", ""576231224763.13""], [""OPERACOES ESPECIAIS: TRANSFERENCIAS CONSTITUCIONAIS E AS DECORRENTES DE LEGISLACAO ESPECIFICA"", ""TRANSFERENCIA AO FUNDO DE PARTICIPACAO DOS MUNICIPIOS - FPM (CF, ART.159)"", ""192390356623.60""], [""OPERACOES ESPECIAIS: TRANSFERENCIAS CONSTITUCIONAIS E AS DECORRENTES DE LEGISLACAO ESPECIFICA"", ""TRANSFERENCIA AO FUNDO DE PARTICIPACAO DOS ESTADOS E DO DISTRITO FEDERAL - FPE (CF, ART.159)"", ""158571443674.53""]]",[],A tabela 'programa' não existe ou não pode ser consultada.,,29.932615480000095,,,261,206
+baseline,Q031,orcamento,intermediaria,Qual grupo de despesa concentrou o maior valor realizado no orçamento em 2025?,bloqueada,False,"SELECT grupo_despesa, SUM(valor_realizado) AS total_realizado FROM orcamento WHERE ano = 2025 GROUP BY grupo_despesa ORDER BY total_realizado DESC NULLS LAST, grupo_despesa ASC LIMIT 1;","SELECT orgao.nome_orgao_superior AS nome_orgao, SUM(execucao_mensal.valor_pago) AS total_gasto
+FROM execucao_mensal
+JOIN orcamento ON execucao_mensal.id_orcamento = orcamento.id_orcamento
+JOIN orgao ON orcamento.id_orgao = orgao.id_orgao
+WHERE YEAR(execucao_mensal.data_execucao) = 2025
+GROUP BY orgao.nome_orgao_superior
+ORDER BY total_gasto DESC
+LIMIT 1;",,"[[""Outras Despesas Correntes"", ""2205612691610.39""]]",[],O banco recusou a consulta: column execucao_mensal.id_orcamento does not exist,,17.816210786999363,0.002480207998814876,,264,120
+baseline,Q032,orcamento,dificil,Quais foram os cinco grupos de despesa com maior valor realizado no orçamento em 2025?,bloqueada,False,"SELECT grupo_despesa, SUM(valor_realizado) AS total_realizado FROM orcamento WHERE ano = 2025 GROUP BY grupo_despesa ORDER BY total_realizado DESC NULLS LAST, grupo_despesa ASC LIMIT 5;","SELECT orgao.nome_orgao_superior AS grupo, SUM(orcamento.valor_orcado) AS total_orcado
+FROM orcamento
+JOIN orgao ON orcamento.orgao_id = orgao.id
+WHERE orcamento.ano = 2025
+GROUP BY orgao.nome_orgao_superior
+ORDER BY total_orcado DESC
+LIMIT 5;",,"[[""Outras Despesas Correntes"", ""2205612691610.39""], [""Amortização/Refinanciamento da Dívida"", ""1771616365401.20""], [""Juros e Encargos da Dívida"", ""363469278379.43""], [""Pessoal e Encargos Sociais"", ""319940211676.77""], [""Inversões Financeiras"", ""170316899446.04""]]",[],O banco recusou a consulta: column orcamento.orgao_id does not exist,,12.668751806000728,0.001381310999931884,,266,83
+baseline,Q033,orcamento,dificil,Qual foi a participação percentual de cada grupo de despesa no valor realizado do orçamento em 2025?,bloqueada,False,"SELECT grupo_despesa, ROUND(100.0 * SUM(valor_realizado) / NULLIF((SELECT SUM(valor_realizado) FROM orcamento WHERE ano = 2025), 0), 2) AS percentual_realizado FROM orcamento WHERE ano = 2025 GROUP BY grupo_despesa ORDER BY grupo_despesa NULLS LAST;","SELECT
+    orgao.nome_orgao_superior AS grupo,
+    SUM(execucao_mensal.valor_pago) AS valor_realizado,
+    SUM(orcamento.orcamento) AS orcamento_orçado,
+    (SUM(execucao_mensal.valor_pago) * 100 / SUM(orcamento.orcamento)) AS percentual_participacao
+FROM
+    execucao_mensal
+JOIN
+    orcamento ON execucao_mensal.id_orcamento = orcamento.id_orcamento
+JOIN
+    orgao ON orcamento.id_orgao = orgao.id_orgao
+WHERE
+    YEAR(execucao_mensal.data_execucao) = 2025
+GROUP BY
+    orgao.nome_orgao_superior
+ORDER BY
+    percentual_participacao DESC;",,"[[""Amortização/Refinanciamento da Dívida"", ""36.39""], [""Inversões Financeiras"", ""3.50""], [""Investimentos"", ""0.77""], [""Juros e Encargos da Dívida"", ""7.47""], [""Outras Despesas Correntes"", ""45.31""], [""Pessoal e Encargos Sociais"", ""6.57""], [""Reserva de Contingência"", ""0.00""]]",[],O banco recusou a consulta: column execucao_mensal.id_orcamento does not exist,,25.920239266999488,0.0016485739997733617,,268,180
+baseline,Q034,orgaos,intermediaria,Qual órgão superior concentrou o maior valor pago na execução mensal em 2025?,bloqueada,False,"SELECT COALESCE(o.nome_orgao_superior, 'Sem informação') AS orgao_superior, SUM(e.valor_pago) AS total_pago FROM execucao_mensal e LEFT JOIN orgao o ON o.codigo = e.codigo_orgao WHERE e.ano = 2025 GROUP BY 1 ORDER BY total_pago DESC, orgao_superior ASC LIMIT 1;","SELECT orgao.nome_orgao_superior, SUM(execucao_mensal.valor_pago) AS total_pago
+FROM execucao_mensal
+JOIN orgao ON execucao_mensal.orgao_id = orgao.id
+WHERE YEAR(execucao_mensal.data_execucao) = 2025
+GROUP BY orgao.nome_orgao_superior
+ORDER BY total_pago DESC
+LIMIT 1;",,"[[""Ministério da Fazenda"", ""2684995153630.77""]]",[],O banco recusou a consulta: column execucao_mensal.orgao_id does not exist,,13.985450369000318,0.0013816569990012795,,262,94
+baseline,Q035,orgaos,dificil,Quais foram os cinco órgãos superiores com maior valor pago na execução mensal em 2025?,bloqueada,False,"SELECT COALESCE(o.nome_orgao_superior, 'Sem informação') AS orgao_superior, SUM(e.valor_pago) AS total_pago FROM execucao_mensal e LEFT JOIN orgao o ON o.codigo = e.codigo_orgao WHERE e.ano = 2025 GROUP BY 1 ORDER BY total_pago DESC, orgao_superior ASC LIMIT 5;","SELECT orgao.nome_orgao_superior, SUM(execucao_mensal.valor_pago) AS total_pago
+FROM execucao_mensal
+JOIN orgao ON execucao_mensal.orgao_id = orgao.id
+WHERE YEAR(execucao_mensal.data_execucao) = 2025
+GROUP BY orgao.nome_orgao_superior
+ORDER BY total_pago DESC
+LIMIT 5;",,"[[""Ministério da Fazenda"", ""2684995153630.77""], [""Ministério da Previdência Social"", ""1063415001864.77""], [""Ministério da Saúde"", ""223775502371.33""], [""Ministério da Educação"", ""204730752604.83""], [""Ministério do Desenvolvimento e Assistência"", ""167626133570.62""]]",[],O banco recusou a consulta: column execucao_mensal.orgao_id does not exist,,14.293976988001305,0.0017626389999350067,,267,94
+baseline,Q036,classificacao_despesa,intermediaria,Qual categoria econômica apresentou o maior valor empenhado em 2025?,bloqueada,False,"SELECT categoria_economica, SUM(valor_empenhado) AS total_empenhado FROM execucao_mensal WHERE ano = 2025 GROUP BY categoria_economica ORDER BY total_empenhado DESC NULLS LAST, categoria_economica ASC LIMIT 1;","SELECT categoria_economica.nome AS categoria, SUM(execucao_mensal.valor_pago) AS total_empenhado
+FROM execucao_mensal
+JOIN orcamento ON execucao_mensal.id_orcamento = orcamento.id_orcamento
+JOIN categoria_economica ON orcamento.id_categoria_economica = categoria_economica.id_categoria_economica
+WHERE YEAR(execucao_mensal.data_execucao) = 2025
+GROUP BY categoria_economica.nome
+ORDER BY total_empenhado DESC
+LIMIT 1;",,"[[""DESPESAS CORRENTES"", ""3076797615678.16""]]",[],A tabela 'categoria_economica' não existe ou não pode ser consultada.,,18.992522671998813,,,262,126
+baseline,Q037,execucao_financeira,facil,Qual foi o total empenhado em despesas de capital em 2025?,bloqueada,False,SELECT SUM(valor_empenhado) AS total_empenhado FROM execucao_mensal WHERE ano = 2025 AND categoria_economica = 'DESPESAS DE CAPITAL';,"SELECT SUM(execucao_mensal.valor_pago) AS total_empenhado
+FROM execucao_mensal
+JOIN orcamento ON execucao_mensal.id_orcamento = orcamento.id_orcamento
+WHERE orcamento.tipo_gasto = 'capital' AND YEAR(execucao_mensal.data_execucao) = 2025;",,"[[""2110973059928.02""]]",[],O banco recusou a consulta: column execucao_mensal.id_orcamento does not exist,,12.223354196999935,0.0025155570001516026,,262,83
+baseline,Q038,orcamento,intermediaria,Qual foi o valor do orçamento atualizado para cada categoria econômica em 2025?,bloqueada,False,"SELECT categoria_economica, SUM(valor_atualizado) AS total_atualizado FROM orcamento WHERE ano = 2025 GROUP BY categoria_economica ORDER BY categoria_economica NULLS LAST;","SELECT
+    categoria_economica.nome_categoria_economica,
+    SUM(orcamento.orcamento) AS valor_orcamento_atualizado
+FROM
+    orcamento
+JOIN
+    categoria_economica ON orcamento.id_categoria_economica = categoria_economica.id_categoria_economica
+GROUP BY
+    categoria_economica.nome_categoria_economica;",,"[[""DESPESAS CORRENTES"", ""3319119904734.67""], [""DESPESAS DE CAPITAL"", ""2386440565804.00""], [""RESERVA DE CONTINGENCIA"", ""32457748911.00""]]",[],A tabela 'categoria_economica' não existe ou não pode ser consultada.,,12.09182158800104,,,264,81
+baseline,Q039,orcamento,dificil,Qual foi a participação percentual de cada categoria econômica no orçamento atualizado de 2025?,bloqueada,False,"SELECT categoria_economica, ROUND(100.0 * SUM(valor_atualizado) / NULLIF((SELECT SUM(valor_atualizado) FROM orcamento WHERE ano = 2025), 0), 2) AS percentual_orcamento FROM orcamento WHERE ano = 2025 GROUP BY categoria_economica ORDER BY categoria_economica NULLS LAST;","SELECT
+    categoria.nome_categoria,
+    (SUM(execucao_mensal.valor_pago) / SUM(orcamento.orcamento_total) * 100) AS percentual_participacao
+FROM
+    execucao_mensal
+JOIN
+    orcamento ON execucao_mensal.id_orcamento = orcamento.id_orcamento
+JOIN
+    categoria ON orcamento.id_categoria = categoria.id_categoria
+GROUP BY
+    categoria.nome_categoria
+ORDER BY
+    percentual_participacao DESC;",,"[[""DESPESAS CORRENTES"", ""57.84""], [""DESPESAS DE CAPITAL"", ""41.59""], [""RESERVA DE CONTINGENCIA"", ""0.57""]]",[],A tabela 'categoria' não existe ou não pode ser consultada.,,18.070108789999722,,,266,114
+baseline,Q040,execucao_financeira,intermediaria,Em qual mês foi registrado o menor valor pago em 2025?,bloqueada,False,"SELECT mes, SUM(valor_pago) AS total_pago FROM execucao_mensal WHERE ano = 2025 GROUP BY mes ORDER BY total_pago ASC, mes ASC LIMIT 1;","SELECT m.nome_mes, SUM(execucao_mensal.valor_pago) AS total_pago
+FROM execucao_mensal
+JOIN mes m ON execucao_mensal.id_mes = m.id_mes
+WHERE YEAR(execucao_mensal.data_execucao) = 2025
+GROUP BY m.nome_mes
+ORDER BY total_pago ASC
+LIMIT 1;",,"[[""2"", ""266116937177.61""]]",[],A tabela 'mes' não existe ou não pode ser consultada.,,13.940364330999728,,,258,85
+baseline,Q041,classificacao_funcional,intermediaria,Qual subfunção apresentou o maior valor pago na execução mensal em 2025?,bloqueada,False,"SELECT s.nome, SUM(e.valor_pago) AS total_pago FROM execucao_mensal e JOIN subfuncao s ON s.codigo = e.codigo_subfuncao WHERE e.ano = 2025 GROUP BY s.codigo, s.nome ORDER BY total_pago DESC, s.nome ASC LIMIT 1;","SELECT subfuncao.nome_subfuncao, SUM(execucao_mensal.valor_pago) AS total_pago
+FROM subfuncao
+JOIN execucao_mensal ON subfuncao.id_subfuncao = execucao_mensal.id_subfuncao
+WHERE YEAR(execucao_mensal.data_execucao) = 2025
+GROUP BY subfuncao.nome_subfuncao
+ORDER BY total_pago DESC
+LIMIT 1;",,"[[""Refinanciamento da dívida interna"", ""1356200755156.51""]]",[],O banco recusou a consulta: column subfuncao.id_subfuncao does not exist,,16.63359548599874,0.00744862200008356,,263,100
+baseline,Q042,classificacao_funcional,dificil,Quais foram as cinco subfunções com maior valor pago na execução mensal em 2025?,bloqueada,False,"SELECT s.nome, SUM(e.valor_pago) AS total_pago FROM execucao_mensal e JOIN subfuncao s ON s.codigo = e.codigo_subfuncao WHERE e.ano = 2025 GROUP BY s.codigo, s.nome ORDER BY total_pago DESC, s.nome ASC LIMIT 5;","SELECT sf.nome_subfuncao, SUM(execucao_mensal.valor_pago) AS total_pago
+FROM execucao_mensal
+JOIN subfuncao sf ON execucao_mensal.id_subfuncao = sf.id_subfuncao
+WHERE YEAR(execucao_mensal.data_execucao) = 2025
+GROUP BY sf.nome_subfuncao
+ORDER BY total_pago DESC
+LIMIT 5;",,"[[""Refinanciamento da dívida interna"", ""1356200755156.51""], [""Previdência básica"", ""930182610798.90""], [""Serviço da dívida interna"", ""576369980426.90""], [""Outras transferências"", ""469013976137.27""], [""Outros encargos especiais"", ""268404606236.56""]]",[],O banco recusou a consulta: column execucao_mensal.id_subfuncao does not exist,,16.455557856999803,0.002418809999653604,,265,95
+baseline,Q043,modalidade_despesa,facil,Qual foi o total pago em transferências a municípios em 2025?,bloqueada,False,SELECT SUM(valor_pago) AS total_pago FROM execucao_mensal WHERE ano = 2025 AND modalidade_despesa = 'Transferências a Municípios';,"SELECT SUM(execucao_mensal.valor_pago) AS total_pago
+FROM execucao_mensal
+JOIN orcamento ON execucao_mensal.id_orcamento = orcamento.id_orcamento
+JOIN orgao ON orcamento.id_orgao = orgao.id_orgao
+WHERE execucao_mensal.data_execucao BETWEEN '2025-01-01' AND '2025-12-31'
+  AND orgao.nome_orgao_superior = 'Ministério da Cidadania'
+  AND orgao.nome = 'Ministério da Cidadania'
+  AND execucao_mensal.tipo_execucao = 'Transferência a Municípios';",,"[[""299135402274.82""]]",[],O banco recusou a consulta: column execucao_mensal.id_orcamento does not exist,,23.27185102600015,0.003559374999895226,,260,159
+baseline,Q044,modalidade_despesa,facil,Quanto foi pago em transferências a municípios na modalidade fundo a fundo em 2025?,bloqueada,False,SELECT SUM(valor_pago) AS total_pago FROM execucao_mensal WHERE ano = 2025 AND modalidade_despesa = 'Transferências a Municípios - Fundo a Fundo';,"SELECT SUM(execucao_mensal.valor_pago) AS total_transferencias_fundo_a_fundo
+FROM execucao_mensal
+JOIN orcamento ON execucao_mensal.id_orcamento = orcamento.id_orcamento
+JOIN orgao ON orcamento.id_orgao = orgao.id_orgao
+WHERE execucao_mensal.data_execucao BETWEEN '2025-01-01' AND '2025-12-31'
+  AND orcamento.modalidade = 'Fundo a Fundo'
+  AND orgao.nome_orgao_superior = 'Ministério da Fazenda'
+  AND orgao.nome ILIKE '%municípios%';",,"[[""125282496281.70""]]",[],O banco recusou a consulta: column execucao_mensal.id_orcamento does not exist,,23.107596263998857,0.0019129859992972342,,267,156
+baseline,Q045,modalidade_despesa,facil,Qual foi o total pago em transferências a estados e ao Distrito Federal em 2025?,bloqueada,False,SELECT SUM(valor_pago) AS total_pago FROM execucao_mensal WHERE ano = 2025 AND modalidade_despesa = 'Transferências a Estados e ao Distrito Federal';,"SELECT SUM(execucao_mensal.valor_pago) AS total_pago
+FROM execucao_mensal
+JOIN orcamento ON execucao_mensal.id_orcamento = orcamento.id_orcamento
+JOIN orgao ON orcamento.id_orgao = orgao.id_orgao
+WHERE orgao.nome_orgao_superior = 'Ministério da Fazenda' AND (orgao.nome = 'Estado' OR orgao.nome = 'Distrito Federal');",,"[[""303905913330.97""]]",[],O banco recusou a consulta: column execucao_mensal.id_orcamento does not exist,,15.802044652000404,0.002093670998874586,,263,103
+baseline,Q046,execucao_financeira,intermediaria,Em qual mês foi registrado o maior valor liquidado em 2025?,bloqueada,False,"SELECT mes, SUM(valor_liquidado) AS total_liquidado FROM execucao_mensal WHERE ano = 2025 GROUP BY mes ORDER BY total_liquidado DESC, mes ASC LIMIT 1;","SELECT m.nome_mes, SUM(execucao_mensal.valor_pago) AS total_liquidado
+FROM execucao_mensal
+JOIN mes m ON execucao_mensal.mes_id = m.id
+WHERE EXTRACT(YEAR FROM execucao_mensal.data_execucao) = 2025
+GROUP BY m.nome_mes
+ORDER BY total_liquidado DESC
+LIMIT 1;",,"[[""1"", ""737206617291.00""]]",[],A tabela 'mes' não existe ou não pode ser consultada.,,14.069633616998544,,,259,93
+baseline,Q047,emendas,intermediaria,Qual UF concentrou o maior valor pago em despesas com emendas parlamentares em 2025?,bloqueada,False,"SELECT uf, SUM(valor_pago) AS total_pago FROM execucao_mensal WHERE ano = 2025 AND com_emenda IS TRUE AND uf IS NOT NULL GROUP BY uf ORDER BY total_pago DESC, uf ASC LIMIT 1;","SELECT uf.sigla_uf, SUM(execucao_mensal.valor_pago) AS total_pago
+FROM execucao_mensal
+JOIN orcamento ON execucao_mensal.id_orcamento = orcamento.id_orcamento
+JOIN orgao ON orcamento.id_orgao = orgao.id_orgao
+JOIN uf ON orgao.id_uf = uf.id_uf
+WHERE orcamento.id_tipo_despesa = 1 AND YEAR(execucao_mensal.data_execucao) = 2025
+GROUP BY uf.sigla_uf
+ORDER BY total_pago DESC
+LIMIT 1;",,"[[""SP"", ""2356499809.35""]]",[],A tabela 'uf' não existe ou não pode ser consultada.,,19.77961541300101,,,266,135
+baseline,Q048,orcamento,dificil,Qual função apresentou o maior percentual de realização em relação ao orçamento atualizado em 2025?,bloqueada,False,"SELECT f.nome, ROUND(100.0 * SUM(r.valor_realizado) / NULLIF(SUM(r.valor_atualizado), 0), 2) AS percentual_realizado FROM orcamento r JOIN funcao f ON f.codigo = r.codigo_funcao WHERE r.ano = 2025 GROUP BY f.codigo, f.nome HAVING SUM(r.valor_atualizado) <> 0 ORDER BY percentual_realizado DESC, f.nome ASC LIMIT 1;","SELECT orgao.nome_orgao_superior AS ministério,
+       orgao.nome AS órgão,
+       SUM(execucao_mensal.valor_pago) AS gasto,
+       SUM(orcamento.orcamento) AS orçamento,
+       (SUM(execucao_mensal.valor_pago) / SUM(orcamento.orcamento)) * 100 AS percentual_realizado
+FROM execucao_mensal
+JOIN orcamento ON execucao_mensal.id_orcamento = orcamento.id_orcamento
+JOIN orgao ON orcamento.id_orgao = orgao.id_orgao
+WHERE execucao_mensal.data_execucao >= '2025-01-01' AND execucao_mensal.data_execucao <= '2025-12-31'
+GROUP BY orgao.nome_orgao_superior, orgao.nome
+ORDER BY percentual_realizado DESC
+LIMIT 1;",,"[[""Assistência social"", ""97.50""]]",[],O banco recusou a consulta: column execucao_mensal.id_orcamento does not exist,,30.382641910999155,0.0015734100015833974,,267,207
+baseline,Q049,orcamento,dificil,Qual órgão superior apresentou o maior percentual de empenho em relação ao orçamento atualizado em 2025?,bloqueada,False,"SELECT COALESCE(o.nome_orgao_superior, 'Sem informação') AS orgao_superior, ROUND(100.0 * SUM(r.valor_empenhado) / NULLIF(SUM(r.valor_atualizado), 0), 2) AS percentual_empenhado FROM orcamento r LEFT JOIN orgao o ON o.codigo = r.codigo_orgao WHERE r.ano = 2025 GROUP BY 1 HAVING SUM(r.valor_atualizado) <> 0 ORDER BY percentual_empenhado DESC, orgao_superior ASC LIMIT 1;","SELECT orgao.nome_orgao_superior,
+       (SUM(execucao_mensal.valor_pago) / SUM(orcamento.orcamento_atualizado)) * 100 AS percentual_empenho
+FROM execucao_mensal
+JOIN orcamento ON execucao_mensal.id_orcamento = orcamento.id_orcamento
+JOIN orgao ON orcamento.id_orgao = orgao.id_orgao
+WHERE execucao_mensal.ano = 2025
+GROUP BY orgao.nome_orgao_superior
+ORDER BY percentual_empenho DESC
+LIMIT 1;",,"[[""Advocacia-Geral da União"", ""99.82""]]",[],O banco recusou a consulta: column execucao_mensal.id_orcamento does not exist,,19.83974078999927,0.003337935000672587,,269,135
+baseline,Q050,execucao_financeira,intermediaria,Quanto foi pago em despesas de capital durante o segundo semestre de 2025?,bloqueada,False,SELECT SUM(valor_pago) AS total_pago FROM execucao_mensal WHERE ano = 2025 AND mes BETWEEN 7 AND 12 AND categoria_economica = 'DESPESAS DE CAPITAL';,"SELECT SUM(execucao_mensal.valor_pago) AS total_pago
+FROM execucao_mensal
+JOIN orcamento ON execucao_mensal.id_orcamento = orcamento.id_orcamento
+JOIN orgao ON orcamento.id_orgao = orgao.id_orgao
+WHERE execucao_mensal.mes = 6 AND execucao_mensal.ano = 2025 AND orcamento.tipo = 'capital';",,"[[""797513618401.80""]]",[],O banco recusou a consulta: column execucao_mensal.id_orcamento does not exist,,15.143266945000505,0.0017091750014515128,,263,101
