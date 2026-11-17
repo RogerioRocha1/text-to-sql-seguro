@@ -2,7 +2,7 @@
 
 Assistente que responde perguntas em português sobre despesas públicas federais. Ele gera SQL com um modelo aberto local, **valida a consulta antes de executar**, mostra tabela e gráfico e explica a consulta em linguagem simples.
 
-Projeto da disciplina Projetos de IA na Programação.
+Projeto da disciplina Projeto Integrador.
 
 ## Problema
 
