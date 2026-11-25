@@ -382,6 +382,30 @@ Regras da disciplina: pelo menos 10 interações relevantes até a entrega final
 
 ---
 
+## 026 · Documentação técnica e índice de evidências (Marco 4)
+
+- **Data:** 25/11/2026
+- **Integrante:** Rogério Rocha
+- **Ferramenta:** Claude (Claude in Chrome)
+- **Prompt (resumo):** "Pode continuar o projeto de onde parou, precisamos fazer o Marco 4."
+- **Resposta (resumo):** A IA viu que o commit de 19/11 (registros 024 e 025) não tinha chegado ao GitHub e o reconstruiu, repetindo os mesmos passos sobre a `main` (237 testes passando, como antes). Depois, juntou o trabalho aos commits de desempenho do Rodrigo (registro 023): resolveu os conflitos em `app.py`, `assistente.py`, README e `PROMPTS.md` (os registros de 19/11 passaram de 023 e 024 para 024 e 025) e ajustou a documentação ao 3B como modelo padrão. Os arquivos de resultado da explicação e do esclarecimento foram gerados de novo, com os mesmos números e a data de 25/11 no nome. Depois escreveu os 9 itens da documentação técnica pedidos no enunciado (`docs/README.md` como índice: arquitetura com diagramas Mermaid, instalação, referência da interface, fichas dos dados e do modelo, guia de avaliação, testes e CI, segurança e LGPD, manual do usuário), atualizou `docs/arquitetura.svg` com a etapa de esclarecimento antes do modelo e montou `evidencias/README.md` com a situação das 8 evidências, a tabela de afirmações da pesquisa e o roteiro do vídeo, dos logs e das capturas.
+- **Decisão:** aceito, pendente de revisão de outro integrante no PR.
+- **Motivo e revisão:** Cada número da documentação foi conferido nos arquivos de `eval/resultados/` (por exemplo, a mediana de 14,0 s recalculada a partir do CSV de 07/11) e a cobertura foi medida com `pytest --cov` (71%). A IA não gerou capturas de tela, vídeo nem logs, porque precisam sair de uma execução real com banco e modelo, que não havia no ambiente dela; o manual e o índice deixam os nomes dos arquivos esperados. Ao conferir as licenças, a IA encontrou que o `qwen2.5-coder:3b`, usado nas rodadas de avaliação, tem a Qwen Research License (só uso não comercial), diferente do 7B (Apache 2.0); isso entrou no README, na ficha do modelo e na seção de segurança. Ela também apontou que o PR #4 foi aprovado sem revisor, contra a regra de revisão cruzada.
+
+---
+
+## 027 · Rascunho do trabalho de pesquisa (ABNT)
+
+- **Data:** 25/11/2026
+- **Integrante:** Rogério Rocha
+- **Ferramenta:** Claude (Claude in Chrome)
+- **Prompt (resumo):** Mesma sessão do registro 026.
+- **Resposta (resumo):** A IA escreveu o rascunho completo (`docs/pesquisa-abnt-rascunho.docx` e `.pdf`): capa, folha de rosto, resumo e abstract, listas, sumário, as 5 seções textuais (15 páginas), 17 referências e um apêndice que liga cada resultado ao arquivo de origem. Formatação pela NBR 14724: A4, Times New Roman 12, espaçamento 1,5, margens de 3 e 2 cm, numeração a partir da folha de rosto.
+- **Decisão:** aceito como rascunho; o grupo precisa revisar o texto, preencher curso e orientador e conferir cada referência na fonte original.
+- **Motivo e revisão:** Todas as referências foram localizadas pela IA nas páginas oficiais (ACL Anthology, arXiv, NeurIPS, VLDB, OWASP, documentação do PostgreSQL, Planalto) em 25/11/2026, mas a regra da disciplina exige que o grupo confira cada uma. Os números do texto são os mesmos da documentação técnica e do índice de evidências. Os dois resultados que dependem de pessoas (clareza da explicação e cobertura do esclarecimento) ficaram marcados como [PENDENTE] em destaque, sem valor inventado. A versão final deve ser salva como `docs/pesquisa-abnt.pdf`.
+
+---
+
 ## Modelo para novos registros
 
 ```markdown
