@@ -15,7 +15,7 @@ from typing import Any
 import psycopg
 
 from assistente_sql.esquema import TABELAS_CONSULTAVEIS
-from assistente_sql.gerador import Modelo, extrair_sql, montar_mensagens
+from assistente_sql.gerador import Modelo, ModeloOllama, extrair_sql, montar_mensagens
 from assistente_sql.validador import (
     CUSTO_MAXIMO_PADRAO,
     LIMITE_PADRAO,
@@ -29,7 +29,11 @@ log = logging.getLogger("assistente_sql")
 @dataclass(frozen=True)
 class Configuracao:
     ollama_url: str = "http://localhost:11434"
-    ollama_modelo: str = "qwen2.5-coder:7b"
+    # 3b: mesmo modelo da avaliação do Marco 3 e o único que coube com folga
+    # numa máquina de 8 GB rodando só na CPU (7b: 5,5 GB de memória).
+    ollama_modelo: str = "qwen2.5-coder:3b"
+    ollama_contexto: int = 4096
+    ollama_manter_carregado: str = "1h"
     database_url_leitor: str | None = None
     limite_linhas: int = LIMITE_PADRAO
     custo_maximo: float = CUSTO_MAXIMO_PADRAO
@@ -39,9 +43,21 @@ class Configuracao:
         return cls(
             ollama_url=os.environ.get("OLLAMA_URL", cls.ollama_url),
             ollama_modelo=os.environ.get("OLLAMA_MODELO", cls.ollama_modelo),
+            ollama_contexto=int(os.environ.get("OLLAMA_CONTEXTO", cls.ollama_contexto)),
+            ollama_manter_carregado=os.environ.get(
+                "OLLAMA_KEEP_ALIVE", cls.ollama_manter_carregado
+            ),
             database_url_leitor=os.environ.get("DATABASE_URL_LEITOR"),
             limite_linhas=int(os.environ.get("LIMITE_LINHAS", LIMITE_PADRAO)),
             custo_maximo=float(os.environ.get("CUSTO_MAXIMO", CUSTO_MAXIMO_PADRAO)),
+        )
+
+    def criar_modelo(self) -> ModeloOllama:
+        return ModeloOllama(
+            self.ollama_url,
+            self.ollama_modelo,
+            contexto=self.ollama_contexto,
+            manter_carregado=self.ollama_manter_carregado,
         )
 
 
@@ -120,7 +136,7 @@ def main(argv: list[str] | None = None) -> None:
     """Uso: python -m assistente_sql.assistente "Quanto o Ministério da Saúde pagou em 2025?" """
     import argparse
 
-    from assistente_sql.gerador import ModeloOllama, formatar_esquema, ler_esquema
+    from assistente_sql.gerador import formatar_esquema, ler_esquema
 
     parser = argparse.ArgumentParser(description="Responde perguntas pela linha de comando.")
     parser.add_argument("perguntas", nargs="+")
@@ -130,7 +146,7 @@ def main(argv: list[str] | None = None) -> None:
     config = Configuracao.do_ambiente()
     if not config.database_url_leitor:
         raise SystemExit("Defina DATABASE_URL_LEITOR.")
-    modelo = ModeloOllama(config.ollama_url, config.ollama_modelo)
+    modelo = config.criar_modelo()
     with psycopg.connect(config.database_url_leitor) as conexao:
         with conexao.cursor() as cursor:
             esquema = formatar_esquema(ler_esquema(cursor))

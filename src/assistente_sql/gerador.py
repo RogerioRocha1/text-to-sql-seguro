@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 import re
 import time
+import urllib.error
 import urllib.request
 from dataclasses import dataclass, field
 from typing import Protocol
@@ -170,32 +171,81 @@ class Modelo(Protocol):
 
 
 class ModeloOllama:
-    """Cliente mínimo da API /api/chat do Ollama (sem dependências extras)."""
+    """Cliente mínimo da API /api/chat do Ollama (sem dependências extras).
 
-    def __init__(self, url: str, nome: str, timeout: float = 300, contexto: int = 8192):
+    Desempenho (medido em CPU de 4 núcleos, eval/README.md): o prompt com o
+    esquema tem ~1.650 tokens e lê-lo é a etapa mais cara da 1ª pergunta. O
+    Ollama reaproveita essa leitura nas perguntas seguintes enquanto o modelo
+    fica carregado com as mesmas opções; por isso ``contexto`` é fixo,
+    ``manter_carregado`` é longo e ``aquecer`` faz essa leitura antes da 1ª
+    pergunta.
+    """
+
+    def __init__(
+        self,
+        url: str,
+        nome: str,
+        timeout: float = 300,
+        contexto: int = 4096,
+        manter_carregado: str = "1h",
+        max_tokens: int = 512,
+    ):
         self.url = url.rstrip("/")
         self.nome = nome
         self.timeout = timeout
         self.contexto = contexto
+        self.manter_carregado = manter_carregado
+        self.max_tokens = max_tokens
+
+    def aquecer(self, esquema: str) -> None:
+        """Carrega o modelo e lê o prompt do esquema, sem esperar resposta útil."""
+        self._chamar(montar_mensagens("Responda apenas OK.", esquema), max_tokens=1)
 
     def gerar(self, mensagens: list[dict[str, str]]) -> RespostaModelo:
-        corpo = {
-            "model": self.nome,
-            "messages": mensagens,
-            "stream": False,
-            "options": {"temperature": 0, "num_ctx": self.contexto},
-        }
-        pedido = urllib.request.Request(  # noqa: S310 (URL vem da configuração)
-            f"{self.url}/api/chat",
-            data=json.dumps(corpo).encode(),
-            headers={"Content-Type": "application/json"},
-        )
         inicio = time.perf_counter()
-        with urllib.request.urlopen(pedido, timeout=self.timeout) as resposta:  # noqa: S310
-            dados = json.load(resposta)
+        dados = self._chamar(mensagens, self.max_tokens)
         return RespostaModelo(
             texto=dados["message"]["content"],
             tokens_entrada=dados.get("prompt_eval_count", 0),
             tokens_saida=dados.get("eval_count", 0),
             segundos=time.perf_counter() - inicio,
         )
+
+    def _chamar(self, mensagens: list[dict[str, str]], max_tokens: int) -> dict:
+        # O 3b às vezes entra em laço (ex.: indentação infinita) e o Ollama aborta
+        # com "token repeat limit reached". A saída varia entre tentativas mesmo
+        # com temperatura 0, então uma nova tentativa costuma resolver.
+        try:
+            return self._chamar_uma_vez(mensagens, max_tokens)
+        except ErroOllama as erro:
+            if "repeat" not in str(erro):
+                raise
+            return self._chamar_uma_vez(mensagens, max_tokens)
+
+    def _chamar_uma_vez(self, mensagens: list[dict[str, str]], max_tokens: int) -> dict:
+        corpo = {
+            "model": self.nome,
+            "messages": mensagens,
+            "stream": False,
+            "keep_alive": self.manter_carregado,
+            "options": {"temperature": 0, "num_ctx": self.contexto, "num_predict": max_tokens},
+        }
+        pedido = urllib.request.Request(  # noqa: S310 (URL vem da configuração)
+            f"{self.url}/api/chat",
+            data=json.dumps(corpo).encode(),
+            headers={"Content-Type": "application/json"},
+        )
+        try:
+            with urllib.request.urlopen(pedido, timeout=self.timeout) as resposta:  # noqa: S310
+                return json.load(resposta)
+        except urllib.error.HTTPError as erro:
+            # O Ollama explica o erro no corpo da resposta; "HTTP Error 500" não diz nada.
+            try:
+                detalhe = json.loads(erro.read()).get("error", "")
+            except ValueError:
+                detalhe = ""
+            raise ErroOllama(detalhe or f"HTTP {erro.code}") from erro
+
+
+class ErroOllama(RuntimeError):
+    """Erro devolvido pelo Ollama, com a mensagem dele (ex.: modelo não encontrado)."""

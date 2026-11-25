@@ -91,8 +91,67 @@ def test_modelo_ollama_envia_pedido_e_le_resposta(monkeypatch):
     assert enviado["corpo"]["model"] == "qwen2.5-coder:7b"
     assert enviado["corpo"]["stream"] is False
     assert enviado["corpo"]["options"]["temperature"] == 0
+    assert enviado["corpo"]["options"]["num_ctx"] == 4096
+    assert enviado["corpo"]["options"]["num_predict"] == 512
+    assert enviado["corpo"]["keep_alive"] == "1h"
     assert resposta.texto == "```sql\nSELECT 1\n```"
     assert (resposta.tokens_entrada, resposta.tokens_saida) == (1500, 20)
+
+
+def _erro_http(mensagem):
+    import urllib.error
+
+    corpo = io.BytesIO(json.dumps({"error": mensagem}).encode())
+    return urllib.error.HTTPError("http://ollama/api/chat", 500, "Internal Server Error", {}, corpo)
+
+
+def test_laco_de_repeticao_do_modelo_ganha_uma_nova_tentativa(monkeypatch):
+    chamadas = []
+
+    def urlopen_falso(pedido, timeout):
+        chamadas.append(pedido)
+        if len(chamadas) == 1:
+            raise _erro_http("prediction aborted, token repeat limit reached")
+        return io.BytesIO(json.dumps({"message": {"content": "SELECT 1"}}).encode())
+
+    monkeypatch.setattr(gerador.urllib.request, "urlopen", urlopen_falso)
+    resposta = ModeloOllama("http://ollama:11434", "m").gerar([{"role": "user", "content": "x"}])
+    assert resposta.texto == "SELECT 1"
+    assert len(chamadas) == 2
+
+
+def test_outros_erros_do_ollama_nao_repetem_e_trazem_a_mensagem(monkeypatch):
+    chamadas = []
+
+    def urlopen_falso(pedido, timeout):
+        chamadas.append(pedido)
+        raise _erro_http('model "qwen2.5-coder:3b" not found, try pulling it first')
+
+    monkeypatch.setattr(gerador.urllib.request, "urlopen", urlopen_falso)
+    with pytest.raises(gerador.ErroOllama, match="not found"):
+        ModeloOllama("http://ollama:11434", "m").gerar([{"role": "user", "content": "x"}])
+    assert len(chamadas) == 1
+
+
+def test_aquecer_usa_o_mesmo_prompt_e_opcoes_da_pergunta(monkeypatch):
+    """O Ollama só reaproveita a leitura do esquema se o início do prompt e o
+    contexto forem iguais aos da pergunta de verdade."""
+    corpos = []
+
+    def urlopen_falso(pedido, timeout):
+        corpos.append(json.loads(pedido.data))
+        return io.BytesIO(json.dumps({"message": {"content": "OK"}}).encode())
+
+    monkeypatch.setattr(gerador.urllib.request, "urlopen", urlopen_falso)
+    modelo = ModeloOllama("http://ollama:11434", "m", contexto=2048, manter_carregado="30m")
+    modelo.aquecer("CREATE TABLE x ();")
+    modelo.gerar(montar_mensagens("Quanto foi pago?", "CREATE TABLE x ();"))
+
+    aquecimento, pergunta = corpos
+    assert aquecimento["messages"][0] == pergunta["messages"][0]  # mesmo prompt de sistema
+    assert aquecimento["options"]["num_ctx"] == pergunta["options"]["num_ctx"] == 2048
+    assert aquecimento["keep_alive"] == pergunta["keep_alive"] == "30m"
+    assert aquecimento["options"]["num_predict"] == 1
 
 
 @banco

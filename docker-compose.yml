@@ -22,6 +22,7 @@ services:
   # ele estiver vazio. Para recarregar: docker compose run --rm carga python -m assistente_sql.carga
   carga:
     build: .
+    image: assistente-sql:local  # mesma imagem do app: construída uma vez só
     command: ["python", "-m", "assistente_sql.carga", "--ano", "${ANO_DADOS:-2025}", "--se-vazio"]
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-carga}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-despesas}
@@ -35,6 +36,11 @@ services:
   # Modelo local. Roda na CPU por padrão; para usar GPU NVIDIA, veja docker-compose.gpu.yml.
   ollama:
     image: ollama/ollama:0.40.13
+    environment:
+      # Um modelo por vez na memória e mantido carregado por 1 h: evita pagar de
+      # novo a carga (~6 s) e a leitura do esquema (~27 s) depois de uma pausa.
+      OLLAMA_MAX_LOADED_MODELS: 1
+      OLLAMA_KEEP_ALIVE: ${OLLAMA_KEEP_ALIVE:-1h}
     volumes:
       - ollama:/root/.ollama
     ports:
@@ -51,7 +57,7 @@ services:
     entrypoint: ["sh", "-c", 'ollama show "$$OLLAMA_MODELO" > /dev/null 2>&1 || ollama pull "$$OLLAMA_MODELO"']
     environment:
       OLLAMA_HOST: ollama:11434
-      OLLAMA_MODELO: ${OLLAMA_MODELO:-qwen2.5-coder:7b}
+      OLLAMA_MODELO: ${OLLAMA_MODELO:-qwen2.5-coder:3b}
     depends_on:
       ollama:
         condition: service_healthy
@@ -59,6 +65,7 @@ services:
   # Interface web em http://localhost:8501. Consulta o banco só como usuário leitor.
   app:
     build: .
+    image: assistente-sql:local
     command:
       - streamlit
       - run
@@ -69,7 +76,9 @@ services:
     environment:
       DATABASE_URL_LEITOR: postgresql://${POSTGRES_LEITOR_USUARIO:-leitor}:${POSTGRES_LEITOR_SENHA}@db:5432/${POSTGRES_DB:-despesas}
       OLLAMA_URL: http://ollama:11434
-      OLLAMA_MODELO: ${OLLAMA_MODELO:-qwen2.5-coder:7b}
+      OLLAMA_MODELO: ${OLLAMA_MODELO:-qwen2.5-coder:3b}
+      OLLAMA_CONTEXTO: ${OLLAMA_CONTEXTO:-4096}
+      OLLAMA_KEEP_ALIVE: ${OLLAMA_KEEP_ALIVE:-1h}
       LIMITE_LINHAS: ${LIMITE_LINHAS:-1000}
       CUSTO_MAXIMO: ${CUSTO_MAXIMO:-1000000}
     ports:

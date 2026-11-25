@@ -3,15 +3,17 @@
 from __future__ import annotations
 
 import logging
+import threading
 
 import psycopg
 import streamlit as st
 
 from assistente_sql.apresentacao import SITUACOES, escolher_grafico, para_tabela
 from assistente_sql.assistente import Configuracao, responder
-from assistente_sql.gerador import ModeloOllama, formatar_esquema, ler_esquema
+from assistente_sql.gerador import formatar_esquema, ler_esquema
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+log = logging.getLogger("assistente_sql")
 
 EXEMPLOS = [
     "Quais os 5 estados que mais receberam pagamentos em 2025?",
@@ -24,6 +26,26 @@ EXEMPLOS = [
 def carregar_esquema(url: str) -> str:
     with psycopg.connect(url) as conexao, conexao.cursor() as cursor:
         return formatar_esquema(ler_esquema(cursor))
+
+
+@st.cache_resource(show_spinner=False)
+def aquecer_modelo(config: Configuracao, esquema: str) -> threading.Thread:
+    """Uma vez por servidor: carrega o modelo e lê o esquema em segundo plano.
+
+    Sem isso, a 1ª pergunta paga a carga do modelo e a leitura do prompt
+    (~33 s do 3b numa CPU de 4 núcleos); as seguintes já reaproveitam a leitura.
+    """
+
+    def tarefa() -> None:
+        try:
+            config.criar_modelo().aquecer(esquema)
+            log.info("modelo %s aquecido", config.ollama_modelo)
+        except Exception:  # o app funciona sem aquecimento, só a 1ª pergunta demora
+            log.warning("não foi possível aquecer o modelo", exc_info=True)
+
+    thread = threading.Thread(target=tarefa, name="aquecer-modelo", daemon=True)
+    thread.start()
+    return thread
 
 
 def mostrar_resposta(resposta) -> None:
@@ -78,15 +100,21 @@ def main() -> None:
         st.error(f"Não foi possível conectar ao banco: {erro}")
         st.stop()
 
+    if aquecer_modelo(config, esquema).is_alive():
+        st.info(
+            "Preparando o modelo em segundo plano. Você já pode perguntar; "
+            "a primeira resposta só sai quando ele terminar de carregar."
+        )
+
     with st.form("pergunta"):
         pergunta = st.text_input("Sua pergunta", placeholder=EXEMPLOS[0])
         enviada = st.form_submit_button("Perguntar")
     st.caption("Exemplos: " + " · ".join(EXEMPLOS))
 
     if enviada and pergunta.strip():
-        modelo = ModeloOllama(config.ollama_url, config.ollama_modelo)
+        modelo = config.criar_modelo()
         with (
-            st.spinner("Gerando e conferindo a consulta (a primeira pode levar até 1 minuto)..."),
+            st.spinner("Gerando e conferindo a consulta..."),
             psycopg.connect(config.database_url_leitor) as conexao,
         ):
             resposta = responder(

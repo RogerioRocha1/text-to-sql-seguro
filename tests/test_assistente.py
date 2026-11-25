@@ -51,14 +51,30 @@ def test_pergunta_e_esquema_chegam_ao_modelo():
 
 
 def test_configuracao_le_variaveis_de_ambiente(monkeypatch):
-    monkeypatch.setenv("OLLAMA_MODELO", "qwen2.5-coder:3b")
+    monkeypatch.setenv("OLLAMA_MODELO", "qwen2.5-coder:7b")
+    monkeypatch.setenv("OLLAMA_CONTEXTO", "2048")
+    monkeypatch.setenv("OLLAMA_KEEP_ALIVE", "10m")
     monkeypatch.setenv("LIMITE_LINHAS", "50")
     monkeypatch.setenv("CUSTO_MAXIMO", "1234")
     monkeypatch.delenv("DATABASE_URL_LEITOR", raising=False)
     config = Configuracao.do_ambiente()
-    assert config.ollama_modelo == "qwen2.5-coder:3b"
+    assert config.ollama_modelo == "qwen2.5-coder:7b"
     assert (config.limite_linhas, config.custo_maximo) == (50, 1234.0)
     assert config.database_url_leitor is None
+
+    modelo = config.criar_modelo()
+    assert (modelo.nome, modelo.contexto, modelo.manter_carregado) == (
+        "qwen2.5-coder:7b",
+        2048,
+        "10m",
+    )
+
+
+def test_configuracao_padrao_usa_o_modelo_leve(monkeypatch):
+    for variavel in ("OLLAMA_MODELO", "OLLAMA_CONTEXTO", "OLLAMA_KEEP_ALIVE"):
+        monkeypatch.delenv(variavel, raising=False)
+    config = Configuracao.do_ambiente()
+    assert (config.ollama_modelo, config.ollama_contexto) == ("qwen2.5-coder:3b", 4096)
 
 
 # --- Com o banco real -------------------------------------------------------
