@@ -248,7 +248,7 @@ src/assistente_sql/   código da aplicação: carga, validador, gerador (Ollama)
 tests/                testes automatizados
 eval/                 perguntas de teste e de desenvolvimento, catálogo de ataques, scripts e resultados da avaliação
 evidencias/           vídeo, logs, prints e índice das evidências
-docs/                 documentação técnica e trabalho de pesquisa em PDF
+docs/                 documentação técnica (índice em docs/README.md) e trabalho de pesquisa em PDF
 docker/postgres/      script de inicialização do banco (usuário somente leitura)
 data/raw/             ZIPs baixados do Portal da Transparência (fora do Git)
 ```
@@ -258,14 +258,14 @@ data/raw/             ZIPs baixados do Portal da Transparência (fora do Git)
 - [x] Marco 1 · proposta técnica, repositório e CI rodando testes
 - [x] Marco 2 · carga dos dados, fluxo ponta a ponta no Streamlit, Docker Compose
 - [x] Marco 3 · MVP completo, 50 perguntas de referência, catálogo de ataques, baselines ([resultados](eval/README.md))
-- [ ] Marco 4 · avaliação concluída, documentação técnica e evidências
+- [ ] Marco 4 · avaliação concluída, documentação técnica e evidências. Feito: explicação da consulta e pedido de esclarecimento (funcionalidades congeladas), [documentação técnica completa](docs/README.md), [índice de evidências](evidencias/README.md) e rascunho da pesquisa (`docs/pesquisa-abnt-rascunho.pdf`). Falta: rodada de confirmação do conjunto de teste com os parâmetros de 25/11, avaliação da clareza por 2 pessoas não técnicas, conjunto de perguntas ambíguas, vídeo, logs, capturas de tela e revisão do rascunho pelo grupo
 
 ## Integrantes e contribuição
 
 | Integrante | Papel | Contribuição principal |
 | --- | --- | --- |
 | _(Rodrigo e Thallia)_ | Dados e Qualidade | Marco 2: Thallia Silva de Oliveira: download e análise dos dados de 2025 do Portal da Transparência, conferência da carga no banco local, documentação da decisão sobre órgãos sem código (`docs/decisoes-de-dados.md`) e registro de uso de IA (`PROMPTS.md`). Rodrigo: estrutura docker, git Windows e preparo do Marco 2 |
-| _(Rogério Rocha)_ | Backend e Infraestrutura | Marco 1: Proposta técnica, repositório, integração e revisão contínua. Marco 2: revisão do PR #2 e correções no validador (brecha de CTE) e na tabela de resultados. Marco 3 (17/11/2026): catálogo de 97 ataques (`eval/ataques.jsonl`, `eval/avaliar_ataques.py`, `tests/test_ataques.py`) com baseline sem validador; correção de 9 brechas do validador encontradas pelo catálogo; análise completa do baseline sem esquema (`eval/analise_erros.md`, seção 6); conjunto de desenvolvimento D01–D10 (`eval/perguntas_dev.jsonl`) e partição dev/teste; integração da avaliação da Thamiris (PR #3) e registros 019 a 022 no `PROMPTS.md` |
+| _(Rogério Rocha)_ | Backend e Infraestrutura | Marco 1: Proposta técnica, repositório, integração e revisão contínua. Marco 2: revisão do PR #2 e correções no validador (brecha de CTE) e na tabela de resultados. Marco 3 (17/11/2026): catálogo de 97 ataques (`eval/ataques.jsonl`, `eval/avaliar_ataques.py`, `tests/test_ataques.py`) com baseline sem validador; correção de 9 brechas do validador encontradas pelo catálogo; análise completa do baseline sem esquema (`eval/analise_erros.md`, seção 6); conjunto de desenvolvimento D01–D10 (`eval/perguntas_dev.jsonl`) e partição dev/teste; integração da avaliação da Thamiris (PR #3) e registros 019 a 022 no `PROMPTS.md`. Marco 4 (19 a 25/11/2026): explicação da consulta (`explicacao.py`) e pedido de esclarecimento (`esclarecimento.py`) com testes e scripts de avaliação; decisões de arquitetura DA-01 a DA-05; documentação técnica em `docs/`; índice de evidências; rascunho da pesquisa; registros 024 a 027 no `PROMPTS.md` |
 | _(Thamiris de Oliveira e Silva)_ | IA e Avaliação | Marco 3 (branch `feat/marco3-perguntas-referencia`): conjunto de 50 perguntas de referência com SQL e resultado esperado conferidos no banco (`eval/perguntas.jsonl`); avaliador automático `eval/avaliar.py`, que compara o assistente completo com um baseline sem esquema dinâmico e gera métricas em CSV/JSON; critério de comparação (valores em centavos, ordem exigida só em rankings) e reavaliação de resultados históricos; primeira rodada completa (31/50 acertos, 62%, contra 0/50 do baseline); análise dos 19 erros (`eval/analise_erros.md`) e registros 013 a 018 no `PROMPTS.md` |
 | _(nome)_ | Produto e Interface | |
 
@@ -277,4 +277,4 @@ Ferramentas usadas na programação e o registro das interações estão em [`PR
 
 ## Licenças
 
-Código sob licença MIT (veja `LICENSE`). Dependências principais: SQLGlot (MIT), PostgreSQL (PostgreSQL License), psycopg (LGPL 3.0), Streamlit (Apache 2.0), Ollama (MIT). Dados: Portal da Transparência do Governo Federal (CGU), dados abertos.
+Código sob licença MIT (veja `LICENSE`). Dependências principais: SQLGlot (MIT), PostgreSQL (PostgreSQL License), psycopg (LGPL 3.0), Streamlit (Apache 2.0), Ollama (MIT). Modelos: `qwen2.5-coder:3b`, o padrão (Qwen Research License, só uso não comercial), e `qwen2.5-coder:7b`, opcional com GPU (Apache 2.0); veja [docs/dados-e-modelo.md](docs/dados-e-modelo.md#ficha-do-modelo)). Dados: Portal da Transparência do Governo Federal (CGU), dados abertos.
