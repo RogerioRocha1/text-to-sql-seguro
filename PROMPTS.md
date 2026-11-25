@@ -334,6 +334,30 @@ Regras da disciplina: pelo menos 10 interações relevantes até a entrega final
 
 ---
 
+## 023 · Otimização de desempenho para máquinas mais fracas
+
+- **Data:** 25/11/2026
+- **Integrante:** Rodrigo Santos
+- **Ferramenta:** Claude Code (extensão do VS Code)
+- **Prompt (resumo):** "Ao rodar o protótipo está demorando muito para compilar; em máquinas mais fracas também não está conseguindo ou demorando muito. Revise e otimize para que rode mais leve e rápido."
+- **Resposta (resumo):** antes de mudar qualquer coisa, a IA mediu onde o tempo era gasto. Mais de 99% vem do modelo, e a 1ª pergunta é dominada pela leitura do prompt de ~1.650 tokens. As medições foram feitas num Ollama só na CPU, limitado a 4 núcleos e 8 GB, comparando 7B, 3B e 1.5B. Na branch `otimizacao-desempenho`:
+  - **Modelo:** 3B como padrão, o mesmo do benchmark; o 1.5B foi descartado por errar 2 de 3 perguntas.
+  - **Aquecimento** do modelo em segundo plano quando o app abre.
+  - **Opções do Ollama:** `keep_alive` de 1 h, contexto de 4096, limite de 512 tokens e um modelo por vez na memória.
+  - **Dockerfile:** camada de dependências separada e uma imagem só.
+  - **Resultado na CPU:** 1ª pergunta de 89 s (7B) → 7,6 s (3B aquecido). O rebuild depois de mudar o código caiu de 40 s para 5,7 s.
+- **Decisão:** _(aceito / corrigido / descartado)_
+- **Motivo e revisão:**
+  - **Falha real encontrada no teste:** o 3B às vezes entra em laço de indentação e o Ollama aborta com erro 500 ("token repeat limit reached"). A IA isolou a causa: aparece com contexto 8192 e 4096, então não foi a otimização que a criou. Ela passou a ler a mensagem real do Ollama e a fazer uma nova tentativa só nesse caso; no estresse, 3 de 3 novas tentativas deram certo.
+  - **Erros da IA corrigidos antes de entregar:**
+    - estimou "~7 s" para a 1ª pergunta do 7B com GPU, e a medição deu 2,3 s;
+    - escreveu que o 7B "acerta mais", o que nunca foi medido no benchmark, e a frase foi trocada;
+    - a primeira medição do build saiu errada (0,2 s) porque a função de medida passava um argumento vazio ao `docker build`.
+  - **Custo da troca:** o 3B errou uma pergunta (inventou a coluna `data`) que o 7B tinha acertado. Por isso o README recomenda o 7B para quem tem GPU de 6 GB ou mais.
+  - **A revisar:** o `.env` de cada integrante copiado antes de 25/11 ainda aponta para o 7B. A `docs/proposta-tecnica.md` diz que o 7B é o padrão.
+
+---
+
 ## Modelo para novos registros
 
 ```markdown

@@ -25,6 +25,55 @@ Medição de 02/11/2026: usuário `leitor`, PostgreSQL 16 no Docker Desktop, `st
 
 **Limitação:** o custo é uma estimativa. Uma consulta pode ficar abaixo do limite e ainda assim demorar; nesse caso vale o `statement_timeout` de 15 s do usuário `leitor`. Os casos do banco real estão em `tests/test_validador.py` e rodam com `DATABASE_URL_LEITOR` definida.
 
+## Desempenho e escolha do modelo (25/11/2026)
+
+Motivo: em máquinas mais fracas, o protótipo demorava demais ou não rodava. Na avaliação de 17/11, com o 3B na CPU, o modelo levou em média 30,1 s por pergunta, contra 0,01 s da estimativa de custo e 0,11 s da execução no banco. **Mais de 99% do tempo é do modelo.**
+
+### Onde o tempo vai
+
+O prompt com o esquema tem cerca de 1.650 tokens. Medição com `ollama/ollama:0.40.13` só na CPU, limitado a 4 núcleos e 8 GB (`docker run --cpus 4 -m 8g`), para simular uma máquina fraca. Contexto de 8192 e temperatura 0:
+
+| Modelo | Memória | 1ª pergunta (carga + leitura do prompt + geração) | Perguntas seguintes | Qualidade nas 3 perguntas de teste |
+| --- | ---: | --- | ---: | --- |
+| `qwen2.5-coder:7b` | 5,5 GB | 88,8 s (12,7 + 62,4 + 13,7) | 14,8 a 18,5 s | 3/3 |
+| `qwen2.5-coder:3b` | 2,4 GB | 39,2 s (5,6 + 27,2 + 6,4) | 8,3 a 10,4 s | 3/3 |
+| `qwen2.5-coder:1.5b` | 1,4 GB | 19,1 s (2,1 + 13,9 + 3,2) | 2,4 a 6,4 s | 1/3 (chegou a pôr um código de órgão fixo no SQL) |
+
+- **Leitura do prompt:** nas perguntas seguintes, ela cai de 27 s para 0,5 s (3B), porque o Ollama reaproveita a leitura do esquema enquanto o modelo continua carregado com as mesmas opções.
+- **7B na CPU:** o custo da 1ª pergunta e o modelo descarregado depois de 5 minutos parado (padrão do Ollama) explicam a lentidão. Ele também não cabe no Docker de uma máquina com 8 GB, que por padrão fica com cerca de 4 GB.
+
+### O que mudou
+
+| Mudança | Efeito medido |
+| --- | --- |
+| Modelo padrão `qwen2.5-coder:3b` (o mesmo deste benchmark); o 7B fica como opção para quem tem GPU | Memória de 5,5 GB → 2,2 GB; 1ª pergunta na CPU de 89 s → 39 s |
+| Aquecimento: o app lê o esquema em segundo plano ao abrir (`ModeloOllama.aquecer`) | 1ª pergunta na CPU de 37,9 s → 7,6 s (o preparo de ~30 s acontece enquanto a pessoa digita) |
+| `keep_alive` de 1 h (antes, 5 min) e um modelo por vez na memória | Evita reler o esquema depois de uma pausa |
+| Contexto de 8192 → 4096 (`OLLAMA_CONTEXTO`) | 2,4 GB → 2,2 GB no 3B; mesmas respostas nas 3 perguntas |
+| Limite de 512 tokens na resposta (`num_predict`) | As respostas medidas tiveram de 33 a 106 tokens; o limite só corta laços |
+| Nova tentativa quando o Ollama aborta por repetição | Veja abaixo |
+| Dockerfile com camada de dependências separada e uma imagem para `carga` e `app` | Rebuild depois de mudar o código: 40,0 s → 5,7 s |
+
+O conteúdo do prompt (`gerador.INSTRUCOES` e o esquema) **não mudou**.
+
+### Falha encontrada: laço de repetição do 3B
+
+Na GPU, a pergunta "Qual foi o valor pago por mês na função Saúde?" às vezes faz o 3B se enrolar na indentação do SQL. O Ollama então aborta com `500 prediction aborted, token repeat limit reached`.
+
+- **Não depende da configuração nova:** a falha apareceu e sumiu tanto com contexto de 8192 quanto de 4096.
+- **Depende do estado do modelo:** a mesma pergunta gerou 91 ou 106 tokens em rodadas diferentes, mesmo com temperatura 0.
+- **Antes da correção:** o app mostrava "O modelo não respondeu: HTTP Error 500".
+- **Agora:** o gerador lê a mensagem de erro do Ollama e, só nesse caso de repetição, tenta mais uma vez. Numa rodada de estresse com 3 repetições, o laço ocorreu 3 vezes e as 3 novas tentativas deram certo (log do Ollama: cada `500` seguido de `200`).
+
+### Efeito sobre os resultados já registrados
+
+Os resultados de 07/11 e 17/11 foram obtidos com contexto de 8192, sem limite de tokens e sem nova tentativa. `avaliar.py` e `avaliar_ataques.py` usam `ModeloOllama` e herdam os novos padrões. Numa nova rodada, os números podem variar um pouco:
+
+- uma pergunta que antes terminava em `erro_modelo` por repetição pode passar a ter resposta;
+- a reutilização da leitura do prompt pode mudar a escolha de palavras, como um apelido de coluna, sem mudar o resultado da consulta.
+
+Para comparar com as rodadas antigas, anote a configuração usada.
+
 ## Conjunto de perguntas e referências
 
 O arquivo [`perguntas.jsonl`](perguntas.jsonl) contém 50 perguntas de referência (Q001–Q050), com as consultas SQL esperadas e os metadados usados na avaliação. As consultas de referência foram conferidas contra o banco antes da execução do benchmark; na rodada de 07/11/2026, as 50 referências passaram pela conferência (`[OK]`).

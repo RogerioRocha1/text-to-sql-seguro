@@ -51,8 +51,21 @@ O projeto inteiro roda em containers: o banco PostgreSQL, a carga dos dados do P
 
 **Requisitos da máquina**
 
-- **Disco:** cerca de 16 GB livres (imagem do Ollama com CUDA, 8,5 GB; modelo `qwen2.5-coder:7b`, 4,7 GB; banco, dados e imagem da aplicação, cerca de 2 GB).
-- **Memória:** 8 GB de RAM livres para o Docker com o modelo 7B. Com menos, use `OLLAMA_MODELO=qwen2.5-coder:3b` no `.env` (1,9 GB). No Windows, o Docker Desktop usa por padrão até metade da RAM do computador.
+- **Disco:** cerca de 12 GB livres (imagem do Ollama, 8,5 GB, a maior parte bibliotecas de GPU; modelo `qwen2.5-coder:3b`, 1,9 GB; banco, dados e imagem da aplicação, cerca de 2 GB).
+- **Memória:** 4 GB de RAM livres para o Docker. O modelo 3B ocupa cerca de 2,2 GB quando carregado. No Windows, o Docker Desktop usa por padrão até metade da RAM do computador.
+- **Internet:** só na primeira execução, para baixar imagens, dados e modelo.
+
+**Qual modelo usar**
+
+| Máquina | `OLLAMA_MODELO` no `.env` | Memória do modelo | Preparo ao abrir | 1ª pergunta | Seguintes |
+| --- | --- | ---: | ---: | ---: | ---: |
+| Sem GPU (padrão) | `qwen2.5-coder:3b` | 2,2 GB | ~30 s | ~8 s | ~8 a 10 s |
+| GPU NVIDIA com menos de 6 GB | `qwen2.5-coder:3b` | 2,2 GB | ~2 s | ~1 s | ~1 a 3 s |
+| GPU NVIDIA com 6 GB ou mais | `qwen2.5-coder:7b` | 5,5 GB | ~4 s | ~2 s | ~3 s |
+
+Os tempos foram medidos em 25/11/2026, sem GPU numa CPU limitada a 4 núcleos e 8 GB e com GPU numa RTX 3050 de 6 GB. O preparo roda em segundo plano quando o app abre: carrega o modelo e lê o esquema. Se a pergunta chegar antes de ele terminar, ela espera.
+
+O 7B ocupa 4,7 GB de disco e, **na CPU, leva o dobro do tempo** do 3B (1ª pergunta de 89 s sem preparo). Ele também não cabe no Docker de uma máquina com 8 GB de RAM. O benchmark do Marco 3 foi feito com o 3B. O 1.5B foi testado e descartado: errou 2 de 3 perguntas simples.
 - **Internet:** só na primeira execução, para baixar imagens, dados e modelo.
 
 **Windows 10/11 (máquina local)**
@@ -165,7 +178,7 @@ Para cada pergunta, a tela mostra:
 - um gráfico, quando o resultado tem uma categoria e um valor;
 - em **Detalhes**, o tempo de cada etapa e o custo estimado.
 
-A primeira pergunta demora mais, porque o modelo é carregado na memória: cerca de 50 s numa RTX 3050 de 6 GB, e mais tempo na CPU (não medido ainda). As seguintes levam de 5 a 7 s nessa GPU.
+Ao abrir, o app prepara o modelo em segundo plano: carrega o modelo e lê o esquema do banco, que tem cerca de 1.650 tokens. Enquanto isso, aparece o aviso "Preparando o modelo". O modelo fica carregado por 1 hora sem uso (`OLLAMA_KEEP_ALIVE`); depois disso, a próxima pergunta volta a demorar o tempo do preparo. Veja os tempos em [Qual modelo usar](#1-instalar-as-dependências).
 
 Todos os endereços escutam só em `127.0.0.1`:
 
@@ -205,9 +218,10 @@ O banco escuta só em `127.0.0.1:5432`. Para acessar de um cliente gráfico (DBe
 | `port is already allocated` na 11434 | O Ollama instalado direto no computador está aberto. Feche-o ou mude `OLLAMA_PORTA` no `.env`. |
 | `port is already allocated` na 8501 | Outro Streamlit está rodando. Feche-o ou mude `APP_PORTA` no `.env`. |
 | http://localhost:8501 não abre | A primeira subida ainda está baixando dados ou o modelo: acompanhe com `docker compose logs -f carga ollama-modelo`. O `app` só inicia depois que os dois terminam. |
-| "O modelo não respondeu" no chat | Modelo sem memória suficiente: veja `docker compose logs ollama`. Troque para `OLLAMA_MODELO=qwen2.5-coder:3b` ou aumente a memória do Docker Desktop (Settings > Resources). |
+| "O modelo não respondeu" no chat | Modelo sem memória suficiente: veja `docker compose logs ollama`. Confira se o `.env` está com `OLLAMA_MODELO=qwen2.5-coder:3b` (um `.env` copiado antes de 25/11 vem com o 7B) ou aumente a memória do Docker Desktop (Settings > Resources). |
+| Respostas muito lentas na CPU | Confira o modelo no `.env` (o 3B é o mais leve com qualidade aceitável) e se o Docker Desktop tem pelo menos 4 núcleos (Settings > Resources). A primeira pergunta depois de 1 hora parada volta a esperar o preparo do modelo. |
 | `could not select device driver "nvidia"` | A GPU foi ativada no `.env`, mas o Docker não enxerga a placa. Instale o driver (e, no Linux, o NVIDIA Container Toolkit) ou comente a linha `COMPOSE_FILE`. |
-| Sem espaço em disco durante o download | São necessários cerca de 16 GB. Libere espaço ou use o modelo 3B. |
+| Sem espaço em disco durante o download | São necessários cerca de 12 GB com o 3B e 15 GB com o 7B. |
 
 ### Perguntas pela linha de comando (desenvolvimento)
 
