@@ -358,6 +358,30 @@ Regras da disciplina: pelo menos 10 interações relevantes até a entrega final
 
 ---
 
+## 024 · Explicação da consulta em linguagem simples
+
+- **Data:** 19/11/2026
+- **Integrante:** Rogério Rocha
+- **Ferramenta:** Claude (Claude in Chrome)
+- **Prompt (resumo):** "Avance continuando o projeto", depois de ler o enunciado (`docs/Projetos-IA-Programacao-Enunciados-PRJ9.md`) e o andamento no README.
+- **Resposta (resumo):** A IA apontou que a explicação em linguagem simples, parte do desafio central do Tema 9, ainda não existia. Ela propôs montar a explicação a partir da árvore do SQLGlot do SQL executado, em vez de pedir ao modelo, e criou `explicacao.py`, a exibição na tela e no CLI, `tests/test_explicacao.py` e `eval/avaliar_explicacoes.py` (métricas automáticas e ficha da amostra para avaliação por pessoas). Também criou `docs/decisoes-de-arquitetura.md`, com os registros DA-01 a DA-05.
+- **Decisão:** aceito, pendente de revisão de outro integrante no PR.
+- **Motivo e revisão:** A proposta de 28/10 previa a explicação escrita pelo modelo. A mudança está registrada em DA-04: o texto descreve exatamente a consulta executada, não aumenta a latência e roda na CI. O explicador foi desenvolvido com os SQLs do conjunto de desenvolvimento. Num deles (D10), a explicação mostra um filtro de ministério que a pergunta não pediu, o que ajuda o usuário a perceber o erro do modelo. Sobre os 43 SQLs executados na rodada de teste de 07/11, 40 tiveram explicação completa, e o explicador não foi ajustado depois dessa medida. A avaliação por 2 pessoas não técnicas (meta: ≥ 75% "entendeu") continua pendente; a IA não preencheu nenhuma nota.
+
+---
+
+## 025 · Pedido de esclarecimento em perguntas ambíguas
+
+- **Data:** 19/11/2026
+- **Integrante:** Rogério Rocha
+- **Ferramenta:** Claude (Claude in Chrome)
+- **Prompt (resumo):** Mesma sessão do registro 024.
+- **Resposta (resumo):** A IA criou `esclarecimento.py`, com três regras que rodam antes do modelo: medida de gasto não informada, tipo de orçamento não informado e ano diferente de 2025. Também criou os botões de opção na tela, o estado `esclarecimento` em `Resposta`, a opção `--sem-esclarecimento` no CLI, a contagem `esclarecimentos` no resumo de `eval/avaliar.py`, `tests/test_esclarecimento.py` e `eval/avaliar_esclarecimento.py`.
+- **Decisão:** aceito, pendente de revisão de outro integrante no PR.
+- **Motivo e revisão:** Antes, o prompt escolhia em silêncio que "gasto" era o valor pago. Registrado em DA-05. As regras foram escritas a partir do esquema e conferidas só com o conjunto de desenvolvimento. Depois disso, a medição no teste mostrou 0 de 50 perguntas com esclarecimento, então a acurácia de 07/11 não muda. A IA não escreveu o conjunto de perguntas ambíguas, porque quem conhece as regras escreveria perguntas a favor do sistema; ele deve ser escrito por um integrante que não leu `esclarecimento.py`.
+
+---
+
 ## Modelo para novos registros
 
 ```markdown

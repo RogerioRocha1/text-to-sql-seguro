@@ -1,4 +1,8 @@
-"""Fluxo ponta a ponta: pergunta -> SQL gerado -> validação -> custo -> execução.
+"""Fluxo ponta a ponta: pergunta -> esclarecimento -> SQL gerado -> validação -> custo -> execução.
+
+Quando a pergunta é ambígua (``esclarecimento.verificar``), o fluxo para antes
+do modelo e devolve as opções ao usuário. Quando o SQL passa na validação, a
+resposta traz a explicação da consulta em linguagem simples (``explicacao``).
 
 A conexão recebida deve ser do usuário ``leitor``. Mesmo assim, cada pergunta
 roda numa transação marcada como somente leitura e sempre desfeita no final.
@@ -14,7 +18,9 @@ from typing import Any
 
 import psycopg
 
+from assistente_sql.esclarecimento import Esclarecimento, verificar
 from assistente_sql.esquema import TABELAS_CONSULTAVEIS
+from assistente_sql.explicacao import Explicacao, explicar
 from assistente_sql.gerador import Modelo, ModeloOllama, extrair_sql, montar_mensagens
 from assistente_sql.validador import (
     CUSTO_MAXIMO_PADRAO,
@@ -66,7 +72,7 @@ class Resposta:
     """Resultado de uma pergunta. ``situacao`` diz onde o fluxo terminou."""
 
     pergunta: str
-    situacao: str = "ok"  # ok | bloqueada | erro_execucao | erro_modelo
+    situacao: str = "ok"  # ok | esclarecimento | bloqueada | erro_execucao | erro_modelo
     texto_modelo: str | None = None
     sql_gerado: str | None = None
     sql_executado: str | None = None
@@ -77,6 +83,8 @@ class Resposta:
     tempos: dict[str, float] = field(default_factory=dict)
     tokens_entrada: int = 0
     tokens_saida: int = 0
+    explicacao: Explicacao | None = None
+    esclarecimento: Esclarecimento | None = None
 
 
 def responder(
@@ -86,8 +94,17 @@ def responder(
     esquema: str,
     limite_linhas: int = LIMITE_PADRAO,
     custo_maximo: float = CUSTO_MAXIMO_PADRAO,
+    esclarecer: bool = True,
 ) -> Resposta:
     resposta = Resposta(pergunta=pergunta)
+
+    if esclarecer:
+        resposta.esclarecimento = verificar(pergunta)
+        if resposta.esclarecimento:
+            resposta.situacao = "esclarecimento"
+            resposta.motivo = resposta.esclarecimento.pergunta
+            _registrar(resposta)
+            return resposta
 
     try:
         gerada = modelo.gerar(montar_mensagens(pergunta, esquema))
@@ -105,6 +122,7 @@ def responder(
         resposta.situacao, resposta.motivo = "bloqueada", validacao.motivo
         _registrar(resposta)
         return resposta
+    resposta.explicacao = _explicar(validacao.sql, limite_linhas)
 
     conexao.read_only = True
     try:
@@ -140,6 +158,11 @@ def main(argv: list[str] | None = None) -> None:
 
     parser = argparse.ArgumentParser(description="Responde perguntas pela linha de comando.")
     parser.add_argument("perguntas", nargs="+")
+    parser.add_argument(
+        "--sem-esclarecimento",
+        action="store_true",
+        help="não para em perguntas ambíguas (gera o SQL mesmo assim)",
+    )
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
@@ -153,21 +176,44 @@ def main(argv: list[str] | None = None) -> None:
         conexao.rollback()
         for pergunta in args.perguntas:
             r = responder(
-                pergunta, modelo, conexao, esquema, config.limite_linhas, config.custo_maximo
+                pergunta,
+                modelo,
+                conexao,
+                esquema,
+                config.limite_linhas,
+                config.custo_maximo,
+                esclarecer=not args.sem_esclarecimento,
             )
             print(f"\n## {pergunta}\nsituação: {r.situacao}  tempos: {r.tempos}")
+            if r.esclarecimento:
+                print(f"esclarecimento: {r.esclarecimento.pergunta}")
+                for opcao in r.esclarecimento.opcoes:
+                    print(f"  - {opcao.rotulo}: {r.esclarecimento.aplicar(pergunta, opcao)}")
+                continue
             print(f"SQL: {r.sql_executado or r.sql_gerado}")
+            if r.explicacao:
+                print("O que a consulta faz:\n" + r.explicacao.texto)
             if r.motivo:
                 print(f"motivo: {r.motivo}")
             for linha in r.linhas[:10]:
                 print("  ", linha)
 
 
+def _explicar(sql: str | None, limite_linhas: int) -> Explicacao | None:
+    """A explicação nunca derruba a resposta: se falhar, a tela mostra só o SQL."""
+    try:
+        return explicar(sql, limite_linhas)
+    except Exception:
+        log.exception("falha ao explicar a consulta")
+        return None
+
+
 def _registrar(resposta: Resposta) -> None:
     log.info(
-        "pergunta=%r situacao=%s linhas=%d custo=%s tempos=%s sql=%r motivo=%r",
+        "pergunta=%r situacao=%s regra=%s linhas=%d custo=%s tempos=%s sql=%r motivo=%r",
         resposta.pergunta,
         resposta.situacao,
+        resposta.esclarecimento.regra if resposta.esclarecimento else None,
         len(resposta.linhas),
         resposta.custo_estimado,
         {k: round(v, 2) for k, v in resposta.tempos.items()},

@@ -1,0 +1,42 @@
+{
+  "csv_origem": "resultados_20261107T193324Z_reavaliado_20261107T204218Z.csv",
+  "data_utc": "2026-11-25T22:18:15.759546+00:00",
+  "semente": 9,
+  "tamanho_amostra": 20,
+  "ids_amostra": [
+    "Q001",
+    "Q002",
+    "Q006",
+    "Q009",
+    "Q012",
+    "Q013",
+    "Q019",
+    "Q021",
+    "Q023",
+    "Q024",
+    "Q026",
+    "Q034",
+    "Q037",
+    "Q038",
+    "Q040",
+    "Q041",
+    "Q045",
+    "Q046",
+    "Q047",
+    "Q050"
+  ],
+  "automaticas": {
+    "consultas_executadas": 43,
+    "com_explicacao": 43,
+    "explicacao_completa": 40,
+    "cobertura_completa_pct": 93.0,
+    "media_passos": 4.6,
+    "media_palavras": 49.1,
+    "ids_incompletos": [
+      "Q014",
+      "Q022",
+      "Q027"
+    ]
+  },
+  "ficha": "explicacoes_ficha_20261125T221815Z.csv"
+}

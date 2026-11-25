@@ -13,6 +13,7 @@ MAX_BARRAS = 30
 
 SITUACOES = {
     "ok": "Consulta executada",
+    "esclarecimento": "A pergunta precisa de um esclarecimento",
     "bloqueada": "Consulta bloqueada pela validação",
     "erro_execucao": "O banco recusou a consulta",
     "erro_modelo": "O modelo não respondeu",

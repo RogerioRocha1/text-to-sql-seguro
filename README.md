@@ -16,6 +16,8 @@ Os dados de despesas federais são abertos, mas consultá-los exige saber SQL ou
 - **Esquema consultável:** `orgao`, `funcao`, `subfuncao`, `programa_acao`, `orcamento` e `execucao_mensal`, com comentários em tabelas e colunas que alimentam o prompt do modelo. Definido em [`esquema.py`](src/assistente_sql/esquema.py).
 - **Modelo:** modelo aberto de código rodando no Ollama. Custo zero, sem chaves de API.
 - **Validador:** aceita um único `SELECT` no dialeto do PostgreSQL; bloqueia escrita (inclusive escondida em `WITH`, `SELECT INTO` e `FOR UPDATE`), comandos administrativos, funções perigosas (`pg_sleep`, `pg_read_file`, `set_config`, `query_to_xml`, `dblink`...), dados da sessão (`user`, `current_query`), conversões `reg*` e `repeat`/`lpad` gigantes, schemas fora de `public` e tabelas fora da lista; aplica `LIMIT`; e recusa consultas com custo estimado pelo `EXPLAIN` acima de 1.000.000 ([calibração](eval/README.md)).
+- **Esclarecimento:** antes de chamar o modelo, [`esclarecimento.py`](src/assistente_sql/esclarecimento.py) confere se a pergunta diz qual medida quer. "Quanto o governo gastou?" pode ser o valor empenhado, o liquidado ou o pago; "orçamento" pode ser o inicial ou o atualizado; e os dados cobrem só 2025. Nesses casos a tela pergunta e mostra as opções em botões.
+- **Explicação:** [`explicacao.py`](src/assistente_sql/explicacao.py) descreve em português simples, a partir do SQL que vai ao banco, de onde vêm os dados, o que é mostrado, os filtros, o agrupamento e a ordem. O texto não é escrito pelo modelo, então descreve exatamente a consulta executada, inclusive quando ela está errada ([decisões DA-04 e DA-05](docs/decisoes-de-arquitetura.md)).
 - **Defesa em camadas:** mesmo que o validador falhe, a aplicação consulta com o usuário `leitor`, que só tem `SELECT` no schema `public`, transações somente leitura e limite de 15 s por consulta ([`01-leitor.sh`](docker/postgres/01-leitor.sh)).
 
 ## Como rodar
@@ -173,10 +175,13 @@ Digite a pergunta em português e clique em **Perguntar**. Exemplos:
 Para cada pergunta, a tela mostra:
 
 - se a consulta foi executada ou **bloqueada** pela validação, e o motivo;
+- **o que a consulta faz**, em português simples;
 - o SQL gerado;
 - a tabela de resultado;
 - um gráfico, quando o resultado tem uma categoria e um valor;
 - em **Detalhes**, o tempo de cada etapa e o custo estimado.
+
+Quando a pergunta é ambígua, por exemplo "Quanto o governo gastou com saúde?", a tela pergunta qual valor você quer (pago, empenhado ou liquidado) e mostra as opções em botões. Ao clicar numa delas, a pergunta é refeita com a escolha.
 
 Ao abrir, o app prepara o modelo em segundo plano: carrega o modelo e lê o esquema do banco, que tem cerca de 1.650 tokens. Enquanto isso, aparece o aviso "Preparando o modelo". O modelo fica carregado por 1 hora sem uso (`OLLAMA_KEEP_ALIVE`); depois disso, a próxima pergunta volta a demorar o tempo do preparo. Veja os tempos em [Qual modelo usar](#1-instalar-as-dependências).
 
@@ -232,14 +237,14 @@ export DATABASE_URL_LEITOR=postgresql://leitor:<senha>@127.0.0.1:5432/despesas  
 python -m assistente_sql.assistente "Quanto o Ministério da Saúde pagou em 2025?"
 ```
 
-A saída mostra o SQL gerado, a situação (`ok`, `bloqueada`, `erro_execucao` ou `erro_modelo`), o motivo do bloqueio e o tempo de cada etapa.
+A saída mostra o SQL gerado, a explicação, a situação (`ok`, `esclarecimento`, `bloqueada`, `erro_execucao` ou `erro_modelo`), o motivo do bloqueio e o tempo de cada etapa. Em perguntas ambíguas, mostra o esclarecimento e a pergunta reescrita para cada opção; `--sem-esclarecimento` gera o SQL mesmo assim.
 
 Variáveis de ambiente: veja `.env.example`. Nenhuma chave de API é necessária.
 
 ## Estrutura
 
 ```text
-src/assistente_sql/   código da aplicação: carga, validador, gerador (Ollama), fluxo ponta a ponta e interface (app.py)
+src/assistente_sql/   código da aplicação: carga, validador, gerador (Ollama), esclarecimento, explicação, fluxo ponta a ponta e interface (app.py)
 tests/                testes automatizados
 eval/                 perguntas de teste e de desenvolvimento, catálogo de ataques, scripts e resultados da avaliação
 evidencias/           vídeo, logs, prints e índice das evidências

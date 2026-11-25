@@ -47,6 +47,7 @@ COLUNAS_CSV = [
     "tempo_execucao_s",
     "tokens_entrada",
     "tokens_saida",
+    "explicacao",
 ]
 
 
@@ -295,6 +296,7 @@ def avaliar_condicao(
                 "tempo_execucao_s": resposta.tempos.get("execucao"),
                 "tokens_entrada": resposta.tokens_entrada,
                 "tokens_saida": resposta.tokens_saida,
+                "explicacao": resposta.explicacao.texto if resposta.explicacao else None,
             }
         except Exception as erro:
             registro = {
@@ -347,6 +349,7 @@ def calcular_metricas(resultados: list[dict[str, Any]]) -> dict[str, Any]:
         "consultas_executadas": executadas,
         "taxa_execucao": round(100 * executadas / total, 2),
         "bloqueadas": sum(r["situacao"] == "bloqueada" for r in resultados),
+        "esclarecimentos": sum(r["situacao"] == "esclarecimento" for r in resultados),
         "erros_execucao": sum(r["situacao"] == "erro_execucao" for r in resultados),
         "erros_modelo": sum(r["situacao"] == "erro_modelo" for r in resultados),
         "erros_avaliador": sum(r["situacao"] == "erro_avaliador" for r in resultados),
