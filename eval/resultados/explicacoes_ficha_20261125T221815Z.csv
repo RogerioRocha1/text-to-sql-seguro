@@ -1,0 +1,89 @@
+﻿id,pergunta,sql_executado,explicacao,explicacao_completa,avaliador,perfil_avaliador,entendeu,fiel_ao_sql,observacao
+Q001,Qual foi o total pago em despesas correntes em 2025?,SELECT SUM(execucao_mensal.valor_pago) AS total_pago FROM execucao_mensal WHERE ano = 2025 AND categoria_economica = 'DESPESAS CORRENTES' LIMIT 1000,"- Consulta a execução mensal da despesa (valores empenhados, liquidados e pagos).
+- Mostra: soma do valor pago.
+- Considera só os registros em que ano é 2025 e categoria econômica é “DESPESAS CORRENTES”.",True,,,,,
+Q002,Qual foi o total pago em despesas com emendas parlamentares em 2025?,SELECT SUM(execucao_mensal.valor_pago) AS total_pago_emendas FROM execucao_mensal WHERE ano = 2025 AND com_emenda = TRUE LIMIT 1000,"- Consulta a execução mensal da despesa (valores empenhados, liquidados e pagos).
+- Mostra: soma do valor pago.
+- Considera só os registros em que ano é 2025 e a despesa veio de emenda parlamentar.",True,,,,,
+Q006,Qual órgão superior teve o maior orçamento atualizado em 2025?,"SELECT o.nome_orgao_superior, SUM(oa.valor_atualizado) AS total_orcamento_atualizado FROM orgao AS o JOIN orcamento AS oa ON o.codigo = oa.codigo_orgao WHERE oa.ano = 2025 GROUP BY o.nome_orgao_superior ORDER BY total_orcamento_atualizado DESC LIMIT 1","- Consulta o orçamento anual (valores previstos e realizados), cruzando com a lista de órgãos.
+- Mostra: ministério ou poder e soma do orçamento atualizado.
+- Considera só os registros em que ano é 2025.
+- Calcula separadamente para cada ministério ou poder.
+- Ordena por soma do orçamento atualizado (do maior para o menor).
+- Fica só com o primeiro.",True,,,,,
+Q009,Qual função apresentou o maior valor realizado no orçamento em 2025?,"SELECT f.nome, SUM(o.valor_realizado) AS total_realizado FROM funcao AS f JOIN orcamento AS o ON f.codigo = o.codigo_funcao WHERE o.ano = 2025 GROUP BY f.nome ORDER BY total_realizado DESC LIMIT 1","- Consulta o orçamento anual (valores previstos e realizados), cruzando com as funções de governo.
+- Mostra: função e soma do valor realizado.
+- Considera só os registros em que ano é 2025.
+- Calcula separadamente para cada função.
+- Ordena por soma do valor realizado (do maior para o menor).
+- Fica só com o primeiro.",True,,,,,
+Q012,Qual município e UF apresentaram o maior valor pago em 2025?,"SELECT e.municipio, e.uf, SUM(e.valor_pago) AS total_pago FROM execucao_mensal AS e WHERE e.ano = 2025 GROUP BY e.municipio, e.uf ORDER BY total_pago DESC LIMIT 1","- Consulta a execução mensal da despesa (valores empenhados, liquidados e pagos).
+- Mostra: município, estado (UF) e soma do valor pago.
+- Considera só os registros em que ano é 2025.
+- Calcula separadamente para cada município e estado (UF).
+- Ordena por soma do valor pago (do maior para o menor).
+- Fica só com o primeiro.",True,,,,,
+Q013,"Quantos municípios distintos, considerando suas respectivas UFs, tiveram pagamentos positivos em 2025?",SELECT COUNT(DISTINCT municipio) AS num_municipios FROM execucao_mensal WHERE ano = 2025 AND valor_pago > 0 LIMIT 1000,"- Consulta a execução mensal da despesa (valores empenhados, liquidados e pagos).
+- Mostra: quantidade de município diferentes.
+- Considera só os registros em que ano é 2025 e valor pago é maior que 0.",True,,,,,
+Q019,Qual foi a média mensal do valor pago em 2025?,SELECT AVG(valor_pago) AS media_mensal_pago FROM execucao_mensal WHERE ano = 2025 LIMIT 1000,"- Consulta a execução mensal da despesa (valores empenhados, liquidados e pagos).
+- Mostra: média do valor pago.
+- Considera só os registros em que ano é 2025.",True,,,,,
+Q021,Qual foi o total pago em despesas de capital em 2025?,SELECT SUM(execucao_mensal.valor_pago) AS total_pago_despesas_de_capital FROM execucao_mensal WHERE ano = 2025 AND categoria_economica = 'DESPESAS DE CAPITAL' LIMIT 1000,"- Consulta a execução mensal da despesa (valores empenhados, liquidados e pagos).
+- Mostra: soma do valor pago.
+- Considera só os registros em que ano é 2025 e categoria econômica é “DESPESAS DE CAPITAL”.",True,,,,,
+Q023,Quanto foi pago em despesas correntes provenientes de emendas parlamentares em 2025?,SELECT SUM(execucao_mensal.valor_pago) AS total_pago_emendas FROM execucao_mensal JOIN orcamento ON execucao_mensal.codigo_orgao = orcamento.codigo_orgao JOIN funcao ON execucao_mensal.codigo_funcao = funcao.codigo JOIN subfuncao ON execucao_mensal.codigo_subfuncao = subfuncao.codigo WHERE orcamento.categoria_economica = 'DESPESAS CORRENTES' AND execucao_mensal.com_emenda = TRUE AND execucao_mensal.ano = 2025 LIMIT 1000,"- Consulta a execução mensal da despesa (valores empenhados, liquidados e pagos), cruzando com o orçamento anual (valores previstos e realizados), as funções de governo e as subfunções.
+- Mostra: soma do valor pago.
+- Considera só os registros em que categoria econômica é “DESPESAS CORRENTES”, a despesa veio de emenda parlamentar e ano é 2025.",True,,,,,
+Q024,Quantas unidades gestoras distintas registraram pagamentos positivos em 2025?,SELECT COUNT(DISTINCT codigo_unidade_gestora) AS num_unidades_gestoras FROM execucao_mensal WHERE ano = 2025 AND valor_pago > 0 LIMIT 1000,"- Consulta a execução mensal da despesa (valores empenhados, liquidados e pagos).
+- Mostra: quantidade de código da unidade gestora diferentes.
+- Considera só os registros em que ano é 2025 e valor pago é maior que 0.",True,,,,,
+Q026,"Qual estado apresentou o maior valor pago em 2025, considerando somente os registros com UF identificada?","SELECT e.uf, SUM(e.valor_pago) AS total_pago FROM execucao_mensal AS e WHERE e.ano = 2025 AND e.uf IS NOT NULL GROUP BY e.uf ORDER BY total_pago DESC LIMIT 1","- Consulta a execução mensal da despesa (valores empenhados, liquidados e pagos).
+- Mostra: estado (UF) e soma do valor pago.
+- Considera só os registros em que ano é 2025 e estado (UF) foi informado.
+- Calcula separadamente para cada estado (UF).
+- Ordena por soma do valor pago (do maior para o menor).
+- Fica só com o primeiro.",True,,,,,
+Q034,Qual órgão superior concentrou o maior valor pago na execução mensal em 2025?,"SELECT o.nome_orgao_superior, SUM(em.valor_pago) AS total_pago FROM orgao AS o JOIN execucao_mensal AS em ON o.codigo = em.codigo_orgao WHERE em.ano = 2025 GROUP BY o.nome_orgao_superior ORDER BY total_pago DESC LIMIT 1","- Consulta a execução mensal da despesa (valores empenhados, liquidados e pagos), cruzando com a lista de órgãos.
+- Mostra: ministério ou poder e soma do valor pago.
+- Considera só os registros em que ano é 2025.
+- Calcula separadamente para cada ministério ou poder.
+- Ordena por soma do valor pago (do maior para o menor).
+- Fica só com o primeiro.",True,,,,,
+Q037,Qual foi o total empenhado em despesas de capital em 2025?,SELECT SUM(execucao_mensal.valor_empenhado) AS total_empenhado FROM execucao_mensal WHERE ano = 2025 AND categoria_economica = 'DESPESAS DE CAPITAL' LIMIT 1000,"- Consulta a execução mensal da despesa (valores empenhados, liquidados e pagos).
+- Mostra: soma do valor empenhado.
+- Considera só os registros em que ano é 2025 e categoria econômica é “DESPESAS DE CAPITAL”.",True,,,,,
+Q038,Qual foi o valor do orçamento atualizado para cada categoria econômica em 2025?,"SELECT categoria_economica, SUM(valor_atualizado) AS valor_total FROM orcamento WHERE ano = 2025 GROUP BY categoria_economica LIMIT 1000","- Consulta o orçamento anual (valores previstos e realizados).
+- Mostra: categoria econômica e soma do orçamento atualizado.
+- Considera só os registros em que ano é 2025.
+- Calcula separadamente para cada categoria econômica.
+- Mostra no máximo 1.000 linhas (limite de segurança).",True,,,,,
+Q040,Em qual mês foi registrado o menor valor pago em 2025?,"SELECT mes, valor_pago FROM execucao_mensal WHERE ano = 2025 ORDER BY valor_pago ASC LIMIT 1","- Consulta a execução mensal da despesa (valores empenhados, liquidados e pagos).
+- Mostra: mês e valor pago.
+- Considera só os registros em que ano é 2025.
+- Ordena por valor pago (do menor para o maior).
+- Fica só com o primeiro.",True,,,,,
+Q041,Qual subfunção apresentou o maior valor pago na execução mensal em 2025?,"SELECT subfuncao.nome, SUM(execucao_mensal.valor_pago) AS total_pago FROM execucao_mensal JOIN subfuncao ON execucao_mensal.codigo_subfuncao = subfuncao.codigo WHERE execucao_mensal.ano = 2025 GROUP BY subfuncao.nome ORDER BY total_pago DESC LIMIT 1","- Consulta a execução mensal da despesa (valores empenhados, liquidados e pagos), cruzando com as subfunções.
+- Mostra: subfunção e soma do valor pago.
+- Considera só os registros em que ano é 2025.
+- Calcula separadamente para cada subfunção.
+- Ordena por soma do valor pago (do maior para o menor).
+- Fica só com o primeiro.",True,,,,,
+Q045,Qual foi o total pago em transferências a estados e ao Distrito Federal em 2025?,"SELECT SUM(execucao_mensal.valor_pago) AS total_pago FROM execucao_mensal WHERE ano = 2025 AND uf IN ('DF', 'ES') LIMIT 1000","- Consulta a execução mensal da despesa (valores empenhados, liquidados e pagos).
+- Mostra: soma do valor pago.
+- Considera só os registros em que ano é 2025 e estado (UF) é um destes: “DF”, “ES”.",True,,,,,
+Q046,Em qual mês foi registrado o maior valor liquidado em 2025?,"SELECT mes, MAX(valor_liquidado) AS maior_valor_liquidado FROM execucao_mensal WHERE ano = 2025 GROUP BY mes ORDER BY maior_valor_liquidado DESC LIMIT 1","- Consulta a execução mensal da despesa (valores empenhados, liquidados e pagos).
+- Mostra: mês e maior valor liquidado.
+- Considera só os registros em que ano é 2025.
+- Calcula separadamente para cada mês.
+- Ordena por maior valor liquidado (do maior para o menor).
+- Fica só com o primeiro.",True,,,,,
+Q047,Qual UF concentrou o maior valor pago em despesas com emendas parlamentares em 2025?,"SELECT uf, SUM(valor_pago) AS total_pago FROM execucao_mensal WHERE ano = 2025 AND com_emenda = TRUE GROUP BY uf ORDER BY total_pago DESC LIMIT 1","- Consulta a execução mensal da despesa (valores empenhados, liquidados e pagos).
+- Mostra: estado (UF) e soma do valor pago.
+- Considera só os registros em que ano é 2025 e a despesa veio de emenda parlamentar.
+- Calcula separadamente para cada estado (UF).
+- Ordena por soma do valor pago (do maior para o menor).
+- Fica só com o primeiro.",True,,,,,
+Q050,Quanto foi pago em despesas de capital durante o segundo semestre de 2025?,SELECT SUM(execucao_mensal.valor_pago) AS total_pago FROM execucao_mensal WHERE ano = 2025 AND mes BETWEEN 6 AND 12 AND categoria_economica = 'DESPESAS DE CAPITAL' LIMIT 1000,"- Consulta a execução mensal da despesa (valores empenhados, liquidados e pagos).
+- Mostra: soma do valor pago.
+- Considera só os registros em que ano é 2025, mês está entre junho e dezembro e categoria econômica é “DESPESAS DE CAPITAL”.",True,,,,,

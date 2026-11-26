@@ -48,12 +48,40 @@ def aquecer_modelo(config: Configuracao, esquema: str) -> threading.Thread:
     return thread
 
 
+def _escolher(pergunta: str) -> None:
+    """Botão de esclarecimento: a pergunta reescrita volta para o formulário."""
+    st.session_state["pergunta_escolhida"] = pergunta
+
+
+def mostrar_esclarecimento(resposta) -> None:
+    esclarecimento = resposta.esclarecimento
+    st.info(esclarecimento.pergunta)
+    colunas = st.columns(len(esclarecimento.opcoes))
+    for i, (coluna, opcao) in enumerate(zip(colunas, esclarecimento.opcoes, strict=True)):
+        coluna.button(
+            opcao.rotulo,
+            key=f"opcao_{i}",
+            on_click=_escolher,
+            args=(esclarecimento.aplicar(resposta.pergunta, opcao),),
+            width="stretch",
+        )
+
+
 def mostrar_resposta(resposta) -> None:
+    if resposta.situacao == "esclarecimento":
+        mostrar_esclarecimento(resposta)
+        return
+
     situacao = SITUACOES.get(resposta.situacao, resposta.situacao)
     if resposta.situacao == "ok":
         st.success(f"{situacao}: {len(resposta.linhas)} linha(s).")
     else:
         st.error(f"{situacao}. {resposta.motivo or ''}")
+
+    if resposta.explicacao:
+        st.markdown("**O que a consulta faz**\n\n" + resposta.explicacao.texto)
+        if not resposta.explicacao.completa:
+            st.caption("Parte da consulta é técnica demais para resumir; confira o SQL abaixo.")
 
     sql = resposta.sql_executado or resposta.sql_gerado
     if sql:
@@ -106,9 +134,13 @@ def main() -> None:
             "a primeira resposta só sai quando ele terminar de carregar."
         )
 
+    escolhida = st.session_state.pop("pergunta_escolhida", None)
+    if escolhida:  # o usuário respondeu a um esclarecimento
+        st.session_state["campo_pergunta"] = escolhida
+
     with st.form("pergunta"):
-        pergunta = st.text_input("Sua pergunta", placeholder=EXEMPLOS[0])
-        enviada = st.form_submit_button("Perguntar")
+        pergunta = st.text_input("Sua pergunta", placeholder=EXEMPLOS[0], key="campo_pergunta")
+        enviada = st.form_submit_button("Perguntar") or bool(escolhida)
     st.caption("Exemplos: " + " · ".join(EXEMPLOS))
 
     if enviada and pergunta.strip():

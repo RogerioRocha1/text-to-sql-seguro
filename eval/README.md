@@ -291,6 +291,59 @@ O banco sozinho segurou o que exige permissão de escrita ou de administrador (4
 
 Arquivos: `resultados/ataques_20261117T184715Z.csv` (antes da correção, com o texto do modelo em `ataques_gerados_20261117T184715Z.jsonl`) e `resultados/ataques_20261117T190054Z.csv` (depois da correção, mesmo texto do modelo), com os resumos `ataques_resumo_*.json`.
 
+## Explicação em linguagem simples
+
+O tema pede que a explicação das consultas seja "avaliada em amostra". A explicação é montada a partir do SQL que vai ao banco, sem o modelo (decisão DA-04 em [`docs/decisoes-de-arquitetura.md`](../docs/decisoes-de-arquitetura.md)). Por isso o texto pode ser gerado a partir do SQL executado gravado em qualquer CSV de `avaliar.py`, e é o mesmo que a tela mostraria para aquela consulta. As rodadas novas de `avaliar.py` já gravam a explicação na coluna `explicacao`.
+
+### Como executar
+
+```powershell
+# métricas automáticas e ficha da amostra (20 consultas, semente 9), sem modelo e sem banco
+docker compose exec app python /app/eval/avaliar_explicacoes.py gerar
+# depois que as pessoas preencherem as fichas
+docker compose exec app python /app/eval/avaliar_explicacoes.py resumir /app/eval/resultados/ficha_pessoa1.csv /app/eval/resultados/ficha_pessoa2.csv
+```
+
+Fora do Docker, com o ambiente dos testes: `python eval/avaliar_explicacoes.py gerar`.
+
+### Métricas automáticas (19/11/2026, sobre a rodada de teste de 07/11)
+
+| Métrica | Valor |
+| --- | ---: |
+| Consultas executadas pelo assistente completo | 43 |
+| Com explicação | 43 (100%) |
+| Com explicação completa, sem trecho "confira no SQL" | 40 (93,0%) |
+| Média de passos por explicação | 4,6 |
+| Média de palavras por explicação | 49,1 |
+
+As 3 explicações incompletas (Q014, Q022, Q027) têm partes da consulta que o explicador não descreve. O explicador foi desenvolvido com o conjunto de desenvolvimento (D01–D10) e não foi ajustado depois desta medida. Arquivo: `resultados/explicacoes_automaticas_20261125T221815Z.json`.
+
+### Avaliação por pessoas (pendente)
+
+A meta da proposta técnica (28/10) é: amostra de 20 explicações avaliadas por 2 pessoas não técnicas, com pelo menos 75% de respostas "entendeu". A amostra sorteada está em `resultados/explicacoes_ficha_20261125T221815Z.csv`. Para preencher:
+
+1. Cada pessoa avaliadora recebe uma cópia da ficha (por exemplo, `ficha_pessoa1.csv`) e preenche `avaliador` e `perfil_avaliador = nao_tecnico`.
+2. Ela lê só as colunas `pergunta` e `explicacao`, sem olhar o SQL, e marca em `entendeu` se entendeu o que a consulta faz: `sim`, `parcial` ou `nao`.
+3. Um integrante do grupo preenche outra cópia com `perfil_avaliador = grupo` e marca em `fiel_ao_sql` se a explicação descreve o SQL (`sim` ou `nao`), mesmo quando o SQL está errado.
+4. O resultado é calculado com `resumir`. As fichas preenchidas ficam em `resultados/`, sem dados pessoais (basta um apelido em `avaliador`).
+
+## Pedido de esclarecimento
+
+O tema pede que o assistente pergunte quando o esquema for ambíguo. A verificação roda antes do modelo, com três regras (decisão DA-05): medida de gasto não informada ("gastou" pode ser empenhado, liquidado ou pago), tipo de orçamento não informado (inicial ou atualizado) e ano diferente de 2025.
+
+```powershell
+docker compose exec app python /app/eval/avaliar_esclarecimento.py
+```
+
+| Medida (19/11/2026) | Resultado |
+| --- | ---: |
+| Perguntas claras com esclarecimento desnecessário (50 de teste e 10 de desenvolvimento) | 0/60 (0%) |
+| Perguntas ambíguas em que o sistema pede esclarecimento | Pendente: falta o conjunto |
+
+Como as regras não disparam em nenhuma das 50 perguntas de teste, a acurácia de 07/11 não muda com o esclarecimento. As novas rodadas de `avaliar.py` contam os esclarecimentos no campo `esclarecimentos` do resumo.
+
+**Falta escrever `perguntas_ambiguas.jsonl`.** A meta da proposta é de pelo menos 60% das perguntas ambíguas com pedido de esclarecimento. Para a medida não ficar a favor do sistema, o arquivo deve ser escrito por quem **não leu** as regras de `esclarecimento.py`, com perguntas ambíguas (`"ambigua": true`) e algumas claras de controle (`"ambigua": false`). Um registro por linha: `{"id": "A01", "pergunta": "...", "ambigua": true, "motivo": "não diz se é valor pago ou empenhado"}`. Arquivo: `resultados/esclarecimento_20261125T221816Z.json`.
+
 ## Artefatos
 
 - `perguntas.jsonl`: conjunto de teste (Q001–Q050), com metadados e consultas de referência.
@@ -298,6 +351,8 @@ Arquivos: `resultados/ataques_20261117T184715Z.csv` (antes da correção, com o 
 - `ataques.jsonl`: catálogo de 97 ataques (72 em SQL, 25 em linguagem natural).
 - `avaliar_ataques.py`: executa o catálogo nas condições protegido e sem validador.
 - `avaliar.py`: execução do benchmark, comparação dos resultados e geração de CSV/JSON; também permite reavaliar CSVs históricos.
+- `avaliar_explicacoes.py`: métricas automáticas das explicações e ficha da amostra para avaliação por pessoas.
+- `avaliar_esclarecimento.py`: cobertura do pedido de esclarecimento e esclarecimentos desnecessários.
 - `resultados/`: arquivos CSV e JSON de cada execução e reavaliação.
 - `analise_erros.md`: análise das 19 respostas incorretas ou não concluídas do assistente completo nesta rodada.
 - `../tests/test_validador.py`: testes do validador, incluindo casos de custo no banco real quando `DATABASE_URL_LEITOR` está configurada.

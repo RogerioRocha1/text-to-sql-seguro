@@ -1,0 +1,18 @@
+{
+  "data_utc": "2026-11-25T22:18:16.456053+00:00",
+  "ambiguas": {
+    "arquivo": null,
+    "total": 0,
+    "pediu_esclarecimento": 0,
+    "pct": null,
+    "meta_pct": 60,
+    "nao_detectadas": []
+  },
+  "claras": {
+    "total": 60,
+    "esclarecimento_desnecessario": 0,
+    "pct": 0.0,
+    "casos": []
+  },
+  "detalhes": []
+}

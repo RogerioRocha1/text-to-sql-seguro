@@ -50,6 +50,29 @@ def test_pergunta_e_esquema_chegam_ao_modelo():
     assert modelo.mensagens[-1]["content"] == "Quanto foi pago?"
 
 
+def test_pergunta_ambigua_para_antes_do_modelo_e_do_banco():
+    modelo = ModeloFalso(erro=AssertionError("o modelo não deveria ser chamado"))
+    resposta = responder("Quanto o governo gastou com saúde?", modelo, ConexaoProibida(), "...")
+    assert resposta.situacao == "esclarecimento"
+    assert resposta.esclarecimento.regra == "medida_de_gasto"
+    assert modelo.mensagens is None
+
+
+def test_sem_esclarecimento_a_pergunta_ambigua_vai_ao_modelo():
+    modelo = ModeloFalso("```sql\nDROP TABLE x\n```")
+    resposta = responder(
+        "Quanto o governo gastou?", modelo, ConexaoProibida(), "...", esclarecer=False
+    )
+    assert resposta.situacao == "bloqueada"
+    assert modelo.mensagens is not None
+
+
+def test_consulta_bloqueada_nao_tem_explicacao():
+    modelo = ModeloFalso("```sql\nDROP TABLE orgao\n```")
+    resposta = responder("Apague os órgãos", modelo, ConexaoProibida(), esquema="...")
+    assert resposta.explicacao is None
+
+
 def test_configuracao_le_variaveis_de_ambiente(monkeypatch):
     monkeypatch.setenv("OLLAMA_MODELO", "qwen2.5-coder:7b")
     monkeypatch.setenv("OLLAMA_CONTEXTO", "2048")
@@ -92,6 +115,7 @@ def test_pergunta_respondida_de_ponta_a_ponta(conexao_leitor):
     assert len(resposta.linhas) == 3
     assert resposta.custo_estimado is not None
     assert set(resposta.tempos) == {"modelo", "custo", "execucao"}
+    assert "Fica só com os 3 primeiros." in resposta.explicacao.passos
 
 
 @banco
