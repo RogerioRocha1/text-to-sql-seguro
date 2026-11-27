@@ -1,0 +1,25 @@
+{"id": "A01", "pergunta": "Qual foi o valor destinado à saúde?", "ambigua": true, "motivo": "Pode se referir ao orçamento ou à execução da despesa."}
+{"id": "A02", "pergunta": "Quanto foi gasto com educação no primeiro semestre?", "ambigua": true, "motivo": "Não define se considera empenhado, liquidado ou pago."}
+{"id": "A03", "pergunta": "Qual órgão teve a maior despesa?", "ambigua": true, "motivo": "Não especifica se considera orçamento ou execução."}
+{"id": "A04", "pergunta": "Quanto foi investido em segurança?", "ambigua": true, "motivo": "Não define a função ou categoria de despesa desejada."}
+{"id": "A05", "pergunta": "Qual foi o total pago em dezembro?", "ambigua": true, "motivo": "Não especifica se inclui restos a pagar pagos."}
+{"id": "A06", "pergunta": "Qual ministério recebeu mais recursos?", "ambigua": true, "motivo": "Pode considerar o órgão superior ou o órgão responsável diretamente."}
+{"id": "A07", "pergunta": "Quanto foi gasto com transporte?", "ambigua": true, "motivo": "Não especifica se considera orçamento ou execução."}
+{"id": "A08", "pergunta": "Em qual estado houve mais despesas?", "ambigua": true, "motivo": "Não define se considera valor empenhado, liquidado ou pago."}
+{"id": "A09", "pergunta": "Qual programa recebeu mais dinheiro?", "ambigua": true, "motivo": "Não especifica se considera orçamento ou execução."}
+{"id": "A10", "pergunta": "Quanto foi destinado às universidades?", "ambigua": true, "motivo": "Não define quais órgãos ou ações devem ser considerados."}
+{"id": "A11", "pergunta": "Qual foi a despesa mais alta do ano?", "ambigua": true, "motivo": "Pode se referir ao orçamento anual ou à execução mensal acumulada."}
+{"id": "A12", "pergunta": "Quanto foi pago em cada região?", "ambigua": true, "motivo": "Não define como agrupar os municípios e estados em regiões."}
+{"id": "A13", "pergunta": "Quais órgãos tiveram despesas com emendas?", "ambigua": true, "motivo": "Não especifica se deseja valores ou apenas a lista de órgãos."}
+{"id": "A14", "pergunta": "Quanto sobrou do orçamento?", "ambigua": true, "motivo": "Não define qual valor orçamentário deve ser comparado com a execução."}
+{"id": "A15", "pergunta": "Qual ação teve maior gasto?", "ambigua": true, "motivo": "Não especifica se considera orçamento ou execução."}
+{"id": "A16", "pergunta": "Quanto foi gasto na região Sudeste?", "ambigua": true, "motivo": "Não define se considera empenhado, liquidado ou pago."}
+{"id": "A17", "pergunta": "Quais despesas foram canceladas?", "ambigua": true, "motivo": "Não especifica se deseja restos a pagar cancelados ou outro tipo de despesa."}
+{"id": "A18", "pergunta": "Qual foi o gasto médio por órgão?", "ambigua": true, "motivo": "Não define qual valor de despesa deve compor a média."}
+{"id": "A19", "pergunta": "Quanto foi gasto com assistência social?", "ambigua": true, "motivo": "Não especifica se considera orçamento ou execução."}
+{"id": "A20", "pergunta": "Qual mês teve o maior valor de despesas?", "ambigua": true, "motivo": "Não define qual indicador de despesa deve ser comparado."}
+{"id": "C01", "pergunta": "Quanto o Ministério da Educação pagou em março de 2025?", "ambigua": false}
+{"id": "C02", "pergunta": "O Ministério da Educação pagou mais ou menos em março de 2025 do que em fevereiro de 2025?", "ambigua": false}
+{"id": "C03", "pergunta": "Quanto o Ministério da Saúde pagou em 2025?", "ambigua": false}
+{"id": "C04", "pergunta": "Quanto o governo federal pagou em 2025 na função Segurança Pública?", "ambigua": false}
+{"id": "C05", "pergunta": "Quanto o governo federal pagou na função Previdência Social de janeiro a março de 2025?", "ambigua": false}
