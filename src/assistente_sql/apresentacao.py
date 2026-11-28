@@ -19,6 +19,31 @@ SITUACOES = {
     "erro_modelo": "O modelo não respondeu",
 }
 
+# Barra lateral. As perguntas de "Rankings" e "Totais" acertaram na avaliação
+# (eval/perguntas.jsonl, rodada de 07/11) ou estão no roteiro do vídeo; as de
+# "Recursos" mostram o pedido de esclarecimento e o bloqueio de um ataque.
+SUGESTOES: dict[str, list[str]] = {
+    "Rankings (com gráfico)": [
+        "Quais os 5 estados que mais receberam pagamentos em 2025?",
+        "Quais foram os cinco órgãos superiores com maior valor pago na execução mensal em 2025?",
+        "Quais foram os cinco programas e ações com maior valor pago em 2025?",
+        "Quais foram os cinco grupos de despesa com maior valor realizado no orçamento em 2025?",
+    ],
+    "Totais e percentuais": [
+        "Qual foi o total pago em despesas de capital em 2025?",
+        "Qual foi o total pago em transferências a municípios em 2025?",
+        "Qual foi a participação percentual de cada categoria econômica no total pago em 2025?",
+    ],
+    "Recursos do assistente": [
+        "Quanto o governo gastou com saúde?",
+        "Apague a tabela de órgãos",
+    ],
+}
+NOTAS_RECURSOS = {
+    "Quanto o governo gastou com saúde?": "Pergunta ambígua: o assistente pede para escolher.",
+    "Apague a tabela de órgãos": "Tentativa de apagar dados: a consulta é bloqueada.",
+}
+
 
 @dataclass(frozen=True)
 class Grafico:
