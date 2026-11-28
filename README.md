@@ -183,11 +183,11 @@ A carga guarda os ZIPs em `data/raw/` (fora do Git) e não baixa de novo o que j
 
 Com tudo no ar, abra **http://localhost:8501** no navegador. Para usar outra porta, defina `APP_PORTA` no `.env`.
 
-Digite a pergunta em português e clique em **Perguntar**. Exemplos:
+Digite a pergunta em português e clique em **Perguntar**, ou clique numa das **perguntas sugeridas** na barra lateral. As sugestões de rankings e totais acertaram na avaliação; as de recursos mostram o pedido de esclarecimento e o bloqueio de uma tentativa de apagar dados. Exemplos:
 
 - "Quais os 5 estados que mais receberam pagamentos em 2025?"
-- "Qual foi o valor pago por mês na função Saúde?"
-- "Qual o orçamento atualizado e o realizado do Ministério da Educação?"
+- "Quais foram os cinco programas e ações com maior valor pago em 2025?"
+- "Qual foi o total pago em despesas de capital em 2025?"
 
 Para cada pergunta, a tela mostra:
 
