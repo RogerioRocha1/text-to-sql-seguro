@@ -2,12 +2,13 @@
 
 from decimal import Decimal
 from pathlib import Path
+from unittest.mock import MagicMock
 
 import pandas as pd
 import pytest
 from streamlit.testing.v1 import AppTest
 
-from assistente_sql.apresentacao import escolher_grafico, para_tabela
+from assistente_sql.apresentacao import SUGESTOES, escolher_grafico, para_tabela
 from assistente_sql.assistente import Resposta
 from conftest import URL_LEITOR, banco
 
@@ -79,3 +80,54 @@ def test_app_bloqueia_sql_destrutivo_do_modelo(monkeypatch):
     assert not app.exception
     assert "bloqueada" in app.error[0].value
     assert app.code[0].value == "DROP TABLE orgao"
+
+
+def _app_sem_banco(monkeypatch, perguntas_recebidas):
+    """App com banco, esquema e modelo falsos: roda na CI, sem PostgreSQL nem Ollama."""
+    import psycopg
+
+    from assistente_sql import assistente, gerador
+
+    def responder_falso(pergunta, *args, **kwargs):
+        perguntas_recebidas.append(pergunta)
+        return Resposta(
+            pergunta=pergunta,
+            colunas=["uf", "pago"],
+            linhas=[("SP", Decimal(2)), ("RJ", Decimal(1))],
+        )
+
+    monkeypatch.setenv("DATABASE_URL_LEITOR", "postgresql://leitor:teste@banco-falso/despesas")
+    monkeypatch.setattr(psycopg, "connect", MagicMock())
+    monkeypatch.setattr(gerador, "ler_esquema", lambda cursor: [])
+    monkeypatch.setattr(gerador, "formatar_esquema", lambda tabelas: "esquema falso")
+    monkeypatch.setattr(gerador.ModeloOllama, "aquecer", lambda self, esquema: None)
+    monkeypatch.setattr(assistente, "responder", responder_falso)
+    return AppTest.from_file(APP, default_timeout=30).run()
+
+
+def test_app_mostra_sugestoes_na_barra_lateral(monkeypatch):
+    app = _app_sem_banco(monkeypatch, [])
+    assert not app.exception
+    rotulos = [botao.label for botao in app.sidebar.button]
+    assert rotulos == [p for perguntas in SUGESTOES.values() for p in perguntas]
+    assert app.button[0].label == "Perguntar"  # o envio do formulário continua sendo o 1º botão
+
+
+def test_clicar_numa_sugestao_envia_a_pergunta(monkeypatch):
+    recebidas = []
+    app = _app_sem_banco(monkeypatch, recebidas)
+    sugestao = app.sidebar.button[0]
+    sugestao.click().run()
+
+    assert not app.exception
+    assert recebidas == [sugestao.label]
+    assert app.text_input[0].value == sugestao.label
+    assert "2 linha(s)" in app.success[0].value
+
+
+def test_sugestoes_claras_nao_pedem_esclarecimento():
+    from assistente_sql.esclarecimento import verificar
+
+    claras = SUGESTOES["Rankings (com gráfico)"] + SUGESTOES["Totais e percentuais"]
+    assert all(verificar(p) is None for p in claras)
+    assert verificar("Quanto o governo gastou com saúde?") is not None
