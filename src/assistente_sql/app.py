@@ -8,18 +8,18 @@ import threading
 import psycopg
 import streamlit as st
 
-from assistente_sql.apresentacao import SITUACOES, escolher_grafico, para_tabela
+from assistente_sql.apresentacao import (
+    NOTAS_RECURSOS,
+    SITUACOES,
+    SUGESTOES,
+    escolher_grafico,
+    para_tabela,
+)
 from assistente_sql.assistente import Configuracao, responder
 from assistente_sql.gerador import formatar_esquema, ler_esquema
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger("assistente_sql")
-
-EXEMPLOS = [
-    "Quais os 5 estados que mais receberam pagamentos em 2025?",
-    "Qual foi o valor pago por mês na função Saúde?",
-    "Qual o orçamento atualizado e o realizado do Ministério da Educação?",
-]
 
 
 @st.cache_resource(show_spinner="Lendo o esquema do banco...")
@@ -49,8 +49,27 @@ def aquecer_modelo(config: Configuracao, esquema: str) -> threading.Thread:
 
 
 def _escolher(pergunta: str) -> None:
-    """Botão de esclarecimento: a pergunta reescrita volta para o formulário."""
+    """Botão de esclarecimento ou de sugestão: a pergunta volta para o formulário."""
     st.session_state["pergunta_escolhida"] = pergunta
+
+
+def mostrar_sugestoes() -> None:
+    """Perguntas prontas na barra lateral: um clique preenche e envia a pergunta."""
+    with st.sidebar:
+        st.header("Perguntas sugeridas")
+        st.caption("Clique numa pergunta para enviá-la.")
+        for grupo, perguntas in SUGESTOES.items():
+            st.subheader(grupo)
+            for i, pergunta in enumerate(perguntas):
+                st.button(
+                    pergunta,
+                    key=f"sugestao_{grupo}_{i}",
+                    on_click=_escolher,
+                    args=(pergunta,),
+                    width="stretch",
+                )
+                if pergunta in NOTAS_RECURSOS:
+                    st.caption(NOTAS_RECURSOS[pergunta])
 
 
 def mostrar_esclarecimento(resposta) -> None:
@@ -135,13 +154,16 @@ def main() -> None:
         )
 
     escolhida = st.session_state.pop("pergunta_escolhida", None)
-    if escolhida:  # o usuário respondeu a um esclarecimento
+    if escolhida:  # o usuário respondeu a um esclarecimento ou clicou numa sugestão
         st.session_state["campo_pergunta"] = escolhida
 
     with st.form("pergunta"):
-        pergunta = st.text_input("Sua pergunta", placeholder=EXEMPLOS[0], key="campo_pergunta")
+        pergunta = st.text_input(
+            "Sua pergunta", placeholder=SUGESTOES["Rankings (com gráfico)"][0], key="campo_pergunta"
+        )
         enviada = st.form_submit_button("Perguntar") or bool(escolhida)
-    st.caption("Exemplos: " + " · ".join(EXEMPLOS))
+    st.caption("Não sabe o que perguntar? Veja as perguntas sugeridas na barra lateral.")
+    mostrar_sugestoes()
 
     if enviada and pergunta.strip():
         modelo = config.criar_modelo()
