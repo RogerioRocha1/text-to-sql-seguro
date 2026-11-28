@@ -22,17 +22,9 @@ Os dados de despesas federais são abertos, mas consultá-los exige saber SQL ou
 
 ## Como rodar
 
-### Testes (disponível desde o Marco 1)
+Para **usar** o assistente, basta instalar o Docker e seguir os passos 1 a 5 abaixo. Os comandos são digitados num terminal: no Windows, o **PowerShell** (procure "PowerShell" no menu Iniciar); no Linux, o **Terminal**. Quando os comandos mudam de um sistema para o outro, eles aparecem separados.
 
-Os testes de custo que usam o banco real são pulados, a menos que `DATABASE_URL_LEITOR` esteja definida (por exemplo, `postgresql://leitor:<senha>@127.0.0.1:5432/despesas`, com o banco do Marco 2 no ar).
-
-```bash
-python -m venv .venv
-source .venv/bin/activate        # Windows: .venv\Scripts\activate
-pip install -e ".[dev]"
-pytest -v
-ruff check . && ruff format --check .
-```
+Python só é necessário para quem vai mexer no código, rodar os testes ou fazer perguntas pela linha de comando: veja [Para desenvolvedores](#para-desenvolvedores).
 
 ### Instalação e execução com Docker (Marco 2)
 
@@ -114,20 +106,46 @@ Confira com `docker version` e `docker compose version`.
 
 Para conferir se o Docker enxerga a placa: `docker run --rm --gpus all --entrypoint nvidia-smi ollama/ollama:0.40.13 -L` (deve listar a GPU). Depois, ative a GPU no `.env` (passo 2).
 
-#### 2. Configurar e subir
+#### 2. Baixar o projeto e configurar
 
-```bash
-git clone <url-do-repositorio> text-to-sql-seguro
+**Windows (PowerShell):**
+
+```powershell
+cd $HOME
+git clone https://github.com/RogerioRocha1/text-to-sql-seguro.git
 cd text-to-sql-seguro
-cp .env.example .env              # edite e troque POSTGRES_PASSWORD e POSTGRES_LEITOR_SENHA
-mkdir -p data/raw                 # Windows (PowerShell): mkdir data\raw
-docker compose up -d              # sobe tudo em segundo plano
-docker compose logs -f carga ollama-modelo   # acompanha a primeira carga e o download do modelo (Ctrl+C para sair)
+Copy-Item .env.example .env
+mkdir data\raw
+notepad .env
 ```
 
-Para gerar senhas: `openssl rand -hex 16` (Linux) ou qualquer gerador de senhas. O `.env` está no `.gitignore` e nunca vai para o Git.
+**Linux:**
+
+```bash
+cd ~
+git clone https://github.com/RogerioRocha1/text-to-sql-seguro.git
+cd text-to-sql-seguro
+cp .env.example .env
+mkdir -p data/raw
+nano .env
+```
+
+No `.env` que abriu, troque os valores de `POSTGRES_PASSWORD` e `POSTGRES_LEITOR_SENHA` por duas senhas diferentes e salve (no `nano`: Ctrl+O, Enter e Ctrl+X). Use **só letras e números**: a senha entra no endereço de conexão do banco, e símbolos como `@`, `:` ou `/` quebram a conexão. Para gerar senhas: `openssl rand -hex 16` (Linux) ou qualquer gerador de senhas. O `.env` está no `.gitignore` e nunca vai para o Git.
 
 Para usar a GPU, descomente no `.env`, **antes** do `docker compose up`, a linha `COMPOSE_FILE` do seu sistema (`;` no Windows, `:` no Linux e no macOS).
+
+> **Importante:** todos os comandos dos próximos passos são digitados **dentro da pasta `text-to-sql-seguro`**. Se fechar o terminal, abra outro e entre na pasta antes de continuar: `cd $HOME\text-to-sql-seguro` no Windows ou `cd ~/text-to-sql-seguro` no Linux.
+
+#### 3. Subir
+
+Os comandos são os mesmos no Windows e no Linux:
+
+```bash
+docker compose up -d
+docker compose logs -f carga ollama-modelo
+```
+
+O primeiro sobe tudo em segundo plano. O segundo mostra o andamento da primeira carga e do download do modelo; quando os dois terminarem, aperte Ctrl+C para sair (isso não desliga nada).
 
 O `docker compose up` faz, na ordem:
 
@@ -161,7 +179,7 @@ execucao_mensal      791013 linhas
 
 A carga guarda os ZIPs em `data/raw/` (fora do Git) e não baixa de novo o que já existe. Ela roda numa única transação e recria as tabelas. Para forçar uma recarga: `docker compose run --rm carga python -m assistente_sql.carga`. Para só baixar, sem banco: `python -m assistente_sql.carga --so-baixar`.
 
-#### 3. Abrir o chat
+#### 4. Abrir o chat
 
 Com tudo no ar, abra **http://localhost:8501** no navegador. Para usar outra porta, defina `APP_PORTA` no `.env`.
 
@@ -196,16 +214,18 @@ Numa VM remota, use túnel SSH em vez de abrir portas para a rede: `ssh -L 8501:
 
 Para parar: `docker compose stop`. Para apagar tudo, inclusive banco e modelo: `docker compose down -v`.
 
-#### 4. Conferir
+#### 5. Conferir
+
+Rode um comando por vez. No PowerShell, troque `curl` por `curl.exe`.
 
 ```bash
-docker compose ps -a                                           # db, ollama e app "Up"; carga e ollama-modelo "Exited (0)"
-curl http://localhost:8501/_stcore/health                      # responde "ok"
-docker compose exec db psql -U carga -d despesas -c "\dt+"     # as 6 tabelas
-docker compose exec db psql -U carga -d despesas \
-  -c "SELECT f.nome, round(sum(e.valor_pago)/1e9, 1) AS pago_bi FROM execucao_mensal e
-      JOIN funcao f ON f.codigo = e.codigo_funcao GROUP BY 1 ORDER BY 2 DESC LIMIT 5"
+docker compose ps -a
+curl http://localhost:8501/_stcore/health
+docker compose exec db psql -U carga -d despesas -c "\dt+"
+docker compose exec db psql -U carga -d despesas -c "SELECT f.nome, round(sum(e.valor_pago)/1e9, 1) AS pago_bi FROM execucao_mensal e JOIN funcao f ON f.codigo = e.codigo_funcao GROUP BY 1 ORDER BY 2 DESC LIMIT 5"
 ```
+
+O que esperar, na ordem: `db`, `ollama` e `app` com situação "Up", e `carga` e `ollama-modelo` com "Exited (0)"; a resposta `ok`; as 6 tabelas; e as 5 funções com maior valor pago, em bilhões de reais.
 
 O banco escuta só em `127.0.0.1:5432`. Para acessar de um cliente gráfico (DBeaver, pgAdmin) na própria máquina, use o usuário `leitor` e a senha `POSTGRES_LEITOR_SENHA` do `.env`. Numa VM remota, use um túnel SSH (`ssh -L 5432:localhost:5432 usuario@vm`) em vez de abrir a porta para a rede.
 
@@ -213,6 +233,7 @@ O banco escuta só em `127.0.0.1:5432`. Para acessar de um cliente gráfico (DBe
 
 | Sintoma | Causa e solução |
 | --- | --- |
+| `no configuration file provided: not found` | O comando foi digitado fora da pasta do projeto. Entre nela (`cd text-to-sql-seguro`) e repita. |
 | `failed to connect to the docker API` | Docker Desktop fechado (Windows) ou serviço parado (Linux: `sudo systemctl start docker`). |
 | `permission denied ... docker.sock` | Usuário fora do grupo `docker`: rode o `usermod` acima e entre de novo na sessão. |
 | `port is already allocated` na porta 5432 | Já existe um PostgreSQL na máquina. Mude `POSTGRES_PORTA` no `.env` (por exemplo, 5433). |
@@ -227,12 +248,57 @@ O banco escuta só em `127.0.0.1:5432`. Para acessar de um cliente gráfico (DBe
 | `could not select device driver "nvidia"` | A GPU foi ativada no `.env`, mas o Docker não enxerga a placa. Instale o driver (e, no Linux, o NVIDIA Container Toolkit) ou comente a linha `COMPOSE_FILE`. |
 | Sem espaço em disco durante o download | São necessários cerca de 12 GB com o 3B e 15 GB com o 7B. |
 
-### Perguntas pela linha de comando (desenvolvimento)
+### Para desenvolvedores
 
-Com o banco e o Ollama no ar, dá para perguntar sem a interface, fora do Docker, com o ambiente dos testes:
+Esta parte é opcional e precisa do Python 3.11 ou mais novo. Rode tudo **dentro da pasta `text-to-sql-seguro`**.
+
+#### Ambiente Python
+
+**Windows (PowerShell):**
+
+```powershell
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -e ".[dev]"
+```
+
+Se aparecer um erro dizendo que a execução de scripts foi desabilitada, rode `Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass` (vale só para aquela janela) e ative de novo.
+
+**Linux** (no Ubuntu, instale antes o `python3-venv` com `sudo apt-get install -y python3-venv`):
 
 ```bash
-export DATABASE_URL_LEITOR=postgresql://leitor:<senha>@127.0.0.1:5432/despesas   # PowerShell: $env:DATABASE_URL_LEITOR="..."
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -e ".[dev]"
+```
+
+Com o ambiente ativo, aparece `(.venv)` no começo da linha. Num terminal novo, rode de novo só a linha de ativação.
+
+#### Testes automatizados
+
+```bash
+pytest -v
+ruff check .
+ruff format --check .
+```
+
+Os testes de custo que usam o banco real são pulados, a menos que `DATABASE_URL_LEITOR` esteja definida (veja abaixo) e o banco esteja no ar (passo 3).
+
+#### Perguntas pela linha de comando
+
+Com o banco e o Ollama no ar (passo 3), dá para perguntar sem a interface. Troque `<senha>` pela `POSTGRES_LEITOR_SENHA` do `.env`.
+
+**Windows (PowerShell):**
+
+```powershell
+$env:DATABASE_URL_LEITOR="postgresql://leitor:<senha>@127.0.0.1:5432/despesas"
+python -m assistente_sql.assistente "Quanto o Ministério da Saúde pagou em 2025?"
+```
+
+**Linux:**
+
+```bash
+export DATABASE_URL_LEITOR=postgresql://leitor:<senha>@127.0.0.1:5432/despesas
 python -m assistente_sql.assistente "Quanto o Ministério da Saúde pagou em 2025?"
 ```
 
